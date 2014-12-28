@@ -28,10 +28,8 @@ reference(nodes == start) = start;
 unvisited = ones(size(nodes));
 
 path = [];
-cost = Inf;
 %% loop through all the nodes
-while unvisited(nodes == goal) || min(distances(logical(unvisited))) == Inf
-
+while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
     %% get the current node
     [~, current_node] = min(distances./unvisited);
     
@@ -51,9 +49,17 @@ while unvisited(nodes == goal) || min(distances(logical(unvisited))) == Inf
     %% remove current node from graph
     unvisited(nodes == current_node) = 0;
 end
-distances
-reference
+
+cost = distances(nodes == goal);
 if cost == Inf
-    path = []';
+    path = [];
+else
+    path_node = goal;
+    while path_node ~= start
+        path = [path path_node];
+        path_node = reference(nodes == path_node);
+    end
+    path = [path start];
 end
+path = fliplr(path)';
 end

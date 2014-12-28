@@ -20,14 +20,13 @@ function [path, cost] = shortestpath(Graph, start, goal)
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
 
-%% initialize graph
+%% initialize graph properties
 nodes = unique(Graph(:,1:2))';
 distances(nodes ~= start) = Inf;
 reference(nodes ~= start) = nan;
 reference(nodes == start) = start;
 unvisited = ones(size(nodes));
 
-path = [];
 %% loop through all the nodes
 while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
     %% get the current node
@@ -42,17 +41,19 @@ while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
     idx = sub2ind(size(Graph),row, col);
     children = nodes(ismember(nodes,Graph(idx)) & unvisited);
     
-    %% update distances
+    %% update distances if necessary
     if ~isempty(children)
         tentative = distances(current_node)+Graph(row,3)' < distances(children);
         distances(children(tentative)) = distances(current_node)+Graph(row(tentative),3);
         reference(ismember(nodes,children(tentative))) = current_node;
     end
     
-    %% remove current node from graph
+    %% remove current node from unvisited set
     unvisited(nodes == current_node) = 0;
 end
 
+%% figure out the path by starting from goal and following min cost
+path = [];
 cost = distances(nodes == goal);
 if cost == Inf
     path = [];
@@ -63,6 +64,6 @@ else
         path_node = reference(nodes == path_node);
     end
     path = [path start];
+    path = fliplr(path)';
 end
-path = fliplr(path)';
 end

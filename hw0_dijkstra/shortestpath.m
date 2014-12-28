@@ -20,9 +20,22 @@ function [path, cost] = shortestpath(Graph, start, goal)
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
 
+if nargin ~= 3
+    error('Not enough arguments');
+end
+
+if isempty(Graph)
+    path = zeros(0,1);
+    cost = Inf;
+    return;
+end
 %% initialize graph properties
 nodes = unique(Graph(:,1:2))';
+if sum(ismember(nodes,start) + ismember(nodes,goal)) < 2
+    error('Not a valid node');
+end
 distances(nodes ~= start) = Inf;
+distances(nodes == start) = 0;
 reference(nodes ~= start) = nan;
 reference(nodes == start) = start;
 unvisited = ones(size(nodes));
@@ -69,11 +82,9 @@ while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
 end
 
 %% figure out the path by starting from goal and following min cost
-path = [];
+path = zeros(0,1);
 cost = distances(nodes == goal);
-if cost == Inf
-    path = [];
-else
+if cost ~= Inf
     path_node = goal;
     while path_node ~= start
         path = [path path_node];

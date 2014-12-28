@@ -27,24 +27,40 @@ reference(nodes ~= start) = nan;
 reference(nodes == start) = start;
 unvisited = ones(size(nodes));
 
-%% loop through all the nodes
+%% loop until we visited our goal and unvisited distances are finite
 while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
     %% get the current node
+    
+    % divide by unvisited indicator. if the node has been visited already,
+    % distance/indicator = Inf
     [~, current_node] = min(distances./unvisited);
     
     %% get all unvisited nodes connected to current node
+    
+    % find indices where current node occurs and where previously visited
+    % nodes do not occur
 	[row, col] = find(Graph(:,1:2) == current_node & fliplr(ismember(Graph(:,1:2),nodes(logical(unvisited)))));
     col = mod(col,2)+1;
+    
+    % sort indices by row
     idx_mat = sortrows([row col],1);
     row = idx_mat(:,1);
     col = idx_mat(:,2);
+    
+    % get the child nodes of the current node
     idx = sub2ind(size(Graph),row, col);
     children = nodes(ismember(nodes,Graph(idx)) & unvisited);
     
     %% update distances if necessary
     if ~isempty(children)
+        % check if tentative distances are bigger than original distances
         tentative = distances(current_node)+Graph(row,3)' < distances(children);
+        
+        % only add distances if they minimize the cost
         distances(children(tentative)) = distances(current_node)+Graph(row(tentative),3);
+        
+        % assign current node as reference for child nodes whose distances
+        % have been updated
         reference(ismember(nodes,children(tentative))) = current_node;
     end
     

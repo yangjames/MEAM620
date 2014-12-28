@@ -36,6 +36,9 @@ while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
     %% get all unvisited nodes connected to current node
 	[row, col] = find(Graph(:,1:2) == current_node & fliplr(ismember(Graph(:,1:2),nodes(logical(unvisited)))));
     col = mod(col,2)+1;
+    idx_mat = sortrows([row col],1);
+    row = idx_mat(:,1);
+    col = idx_mat(:,2);
     idx = sub2ind(size(Graph),row, col);
     children = nodes(ismember(nodes,Graph(idx)) & unvisited);
     

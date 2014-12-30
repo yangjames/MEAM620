@@ -42,8 +42,8 @@ if n < m
     graph = vertcat(graph,zeros(m-n,m));
     n = m;
 end
-if m > n
-    graph = horzcat(graph,zeros(n-m,n));
+if m < n
+    graph = horzcat(graph,zeros(n,n-m));
 end
 graph = graph + graph';
 

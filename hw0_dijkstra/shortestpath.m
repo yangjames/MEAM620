@@ -21,7 +21,7 @@ function [path, cost] = shortestpath(Graph, start, goal)
 % you code.
 
 if nargin ~= 3
-    error('Not enough arguments');
+    error('Incorrect number of arguments');
 end
 
 if isempty(Graph)
@@ -29,68 +29,4 @@ if isempty(Graph)
     cost = Inf;
     return;
 end
-%% initialize graph properties
-nodes = unique(Graph(:,1:2))';
-if sum(ismember(nodes,start) + ismember(nodes,goal)) < 2
-    error('Not a valid node');
-end
-distances(nodes ~= start) = Inf;
-distances(nodes == start) = 0;
-reference(nodes ~= start) = nan;
-reference(nodes == start) = start;
-unvisited = ones(size(nodes));
 
-%% loop until we visited our goal and unvisited distances are finite
-while unvisited(nodes == goal) && min(distances(logical(unvisited))) ~= Inf
-    %% get the current node
-    
-    % divide by unvisited indicator. if the node has been visited already,
-    % distance/indicator = Inf
-    [~, current_node] = min(distances./unvisited);
-    
-    %% get all unvisited nodes connected to current node
-    
-    % find indices where current node occurs and where previously visited
-    % nodes do not occur
-	[row, col] = find(Graph(:,1:2) == current_node & fliplr(ismember(Graph(:,1:2),nodes(logical(unvisited)))));
-    col = mod(col,2)+1;
-    
-    % sort indices by row
-    idx_mat = sortrows([row col],1);
-    row = idx_mat(:,1);
-    col = idx_mat(:,2);
-    
-    % get the child nodes of the current node
-    idx = sub2ind(size(Graph),row, col);
-    children = nodes(ismember(nodes,Graph(idx)) & unvisited);
-    
-    %% update distances if necessary
-    if ~isempty(children)
-        % check if tentative distances are bigger than original distances
-        tentative = distances(current_node)+Graph(row,3)' < distances(children);
-        
-        % only add distances if they minimize the cost
-        distances(children(tentative)) = distances(current_node)+Graph(row(tentative),3);
-        
-        % assign current node as reference for child nodes whose distances
-        % have been updated
-        reference(ismember(nodes,children(tentative))) = current_node;
-    end
-    
-    %% remove current node from unvisited set
-    unvisited(nodes == current_node) = 0;
-end
-
-%% figure out the path by starting from goal and following min cost
-path = zeros(0,1);
-cost = distances(nodes == goal);
-if cost ~= Inf
-    path_node = goal;
-    while path_node ~= start
-        path = [path path_node];
-        path_node = reference(nodes == path_node);
-    end
-    path = [path start];
-    path = fliplr(path)';
-end
-end

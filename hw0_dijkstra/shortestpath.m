@@ -1,4 +1,5 @@
 function [path, cost] = shortestpath(Graph, start, goal)
+profile on
 % SHORTESTPATH Find the shortest path from start to goal on the given Graph.
 %   PATH = SHORTESTPATH(Graph, start, goal) returns an M-by-1 matrix, where each row
 %   consists of the node on the path.  The first
@@ -35,31 +36,40 @@ if start == goal
     return;
 end
 
-% create symmetric adjacency matrix
-graph = sparse(Graph(:,1),Graph(:,2),Graph(:,3));
+graph = sparse(Graph(:,2),Graph(:,1),Graph(:,3));
+%{
+dim = max(max(Graph(:,1)),max(Graph(:,2)));
+idx = sub2ind([dim dim],Graph(:,1), Graph(:,2));
+graph = Inf(dim);
+graph(idx) = Graph(:,3);
+%}
 [n,m] = size(graph);
 if n < m
     graph = vertcat(graph,zeros(m-n,m));
     n = m;
 end
+<<<<<<< HEAD
 if m < n
+=======
+if n > m
+>>>>>>> master
     graph = horzcat(graph,zeros(n,n-m));
 end
+%graph = min(graph,graph');
 graph = graph + graph';
 
-% create distance vector, reference vector, and unvisited set
 distance = Inf(n,1);
 previous = NaN(n,1);
 unvisited = true(n,1);
 distance(start) = 0;
 
-% stay in loop until goal is visited or solution cannot be found
 while unvisited(goal) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
     [dist, current_node] = min(distance./unvisited);
         
     % obtain tentative distances and update distances if necessary
     temp_dist = graph(:,current_node);
+<<<<<<< HEAD
     nonzero = (temp_dist ~= 0);
     if sum(nonzero)
         tentative = logical((dist + temp_dist < distance).*nonzero.*unvisited);
@@ -67,6 +77,19 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
         previous(tentative) = current_node;
     end
 
+=======
+    nonzero = (temp_dist > 0).*unvisited;
+    tentative = logical((dist + temp_dist < distance).*nonzero);
+    distance(tentative) = dist + temp_dist(tentative);
+    previous(tentative) = current_node;
+    %{
+    temp_dist = graph(:,current_node);
+    tentative = dist + temp_dist.*unvisited < distance.*unvisited;
+    distance(tentative) = dist + temp_dist(tentative);
+    previous(tentative) = current_node;
+    %}
+    
+>>>>>>> master
     % remove current node from graph
     unvisited(current_node) = false;
 end

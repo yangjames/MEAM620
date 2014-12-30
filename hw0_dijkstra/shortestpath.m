@@ -1,5 +1,4 @@
 function [path, cost] = shortestpath(Graph, start, goal)
-profile on
 % SHORTESTPATH Find the shortest path from start to goal on the given Graph.
 %   PATH = SHORTESTPATH(Graph, start, goal) returns an M-by-1 matrix, where each row
 %   consists of the node on the path.  The first
@@ -21,8 +20,10 @@ profile on
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
 
+
+%% initialize graph as an empty path with no cost
 path = zeros(0,1);
-cost = Inf;
+cost = 0;
 
 %% special case with an empty graph
 if isempty(Graph)
@@ -36,8 +37,8 @@ if start == goal
     return;
 end
 
-graph = sparse(Graph(:,2),Graph(:,1),Graph(:,3));
-
+%% restructure the graph as a symmetric adjacency matrix
+graph = sparse(Graph(:,1),Graph(:,2),Graph(:,3));
 [n,m] = size(graph);
 if n < m
     graph = vertcat(graph,zeros(m-n,m));
@@ -46,14 +47,14 @@ end
 if m < n
     graph = horzcat(graph,zeros(n,n-m));
 end
-%graph = min(graph,graph');
 graph = graph + graph';
 
 distance = Inf(n,1);
 previous = NaN(n,1);
-unvisited = true(n,1);
+unvisited = sparse(true(n,1));
 distance(start) = 0;
 
+%% loop until goal is visited or is determined to be unreachable
 while unvisited(goal) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
     [dist, current_node] = min(distance./unvisited);
@@ -63,26 +64,27 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
     nonzero = (temp_dist ~= 0);
     if sum(nonzero)
         tentative = logical((dist + temp_dist < distance).*nonzero.*unvisited);
-        distance(tentative) = dist + temp_dist(tentative);
-        previous(tentative) = current_node;
+        if sum(tentative)
+            distance(tentative) = dist + temp_dist(tentative);
+            previous(tentative) = current_node;
+        end
     end
+    
     % remove current node from graph
     unvisited(current_node) = false;
 end
-cost = distance(goal);
 
 %% find the path if it exists
+cost = distance(goal);
 if cost ~= Inf
     path = NaN(size(distance));
     iterator = length(path);
-     path_node = goal;
-     while path_node ~= start
-         path(iterator) = path_node;
-         iterator = iterator - 1;
-         path_node = previous(path_node);
-     end
-     path(iterator) = start;
-     if iterator < length(path)
-        path(1:iterator-1) = [];
-     end
+    path_node = goal;
+    while path_node ~= start
+        path(iterator) = path_node;
+        iterator = iterator - 1;
+        path_node = previous(path_node);
+    end
+    path(iterator) = start;
+    path(1:iterator-1) = [];
 end

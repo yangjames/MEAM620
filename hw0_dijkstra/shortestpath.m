@@ -36,21 +36,23 @@ if start == goal
     return;
 end
 
-%graph = sparse(Graph(:,1),Graph(:,2),Graph(:,3));
+graph = sparse(Graph(:,2),Graph(:,1),Graph(:,3));
+%{
 dim = max(max(Graph(:,1)),max(Graph(:,2)));
 idx = sub2ind([dim dim],Graph(:,1), Graph(:,2));
 graph = Inf(dim);
 graph(idx) = Graph(:,3);
+%}
 [n,m] = size(graph);
 if n < m
     graph = vertcat(graph,zeros(m-n,m));
-else
-    if m > n
-        graph = horzcat(graph,zeros(n-m,n));
-    end
+    n = m;
 end
-graph = min(graph,graph');
-[n,~] = size(graph);
+if n > m
+    graph = horzcat(graph,zeros(n,n-m));
+end
+%graph = min(graph,graph');
+graph = graph + graph';
 
 distance = Inf(n,1);
 previous = NaN(n,1);
@@ -63,10 +65,17 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
         
     % obtain tentative distances and update distances if necessary
     temp_dist = graph(:,current_node);
+    nonzero = (temp_dist > 0).*unvisited;
+    tentative = logical((dist + temp_dist < distance).*nonzero);
+    distance(tentative) = dist + temp_dist(tentative);
+    previous(tentative) = current_node;
+    %{
+    temp_dist = graph(:,current_node);
     tentative = dist + temp_dist.*unvisited < distance.*unvisited;
     distance(tentative) = dist + temp_dist(tentative);
     previous(tentative) = current_node;
-
+    %}
+    
     % remove current node from graph
     unvisited(current_node) = false;
 end

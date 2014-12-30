@@ -24,9 +24,34 @@ if nargin ~= 3
     error('Incorrect number of arguments');
 end
 
+path = zeros(0,1);
+cost = Inf;
+
+%% special case with an empty graph
 if isempty(Graph)
-    path = zeros(0,1);
-    cost = Inf;
     return;
 end
 
+nodes = unique(Graph(:,1:2))
+
+%% special case when start or goal node does not exist
+if sum(start == nodes) == 0 || sum(goal == nodes) == 0
+    error('Invalid start or goal node');
+end
+
+%% special case when we start at our goal
+if start == goal
+    path = start;
+    cost = 0;
+    return;
+end
+
+distance = ones(size(nodes))*Inf;
+previous = ones(size(nodes))*NaN;
+unvisited = logical(ones(size(nodes)));
+
+distance(nodes == start) = 0;
+
+%while unvisited(nodes == start)
+    
+%end

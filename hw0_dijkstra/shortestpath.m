@@ -1,5 +1,4 @@
 function [path, cost] = shortestpath(Graph, start, goal)
-profile on
 % SHORTESTPATH Find the shortest path from start to goal on the given Graph.
 %   PATH = SHORTESTPATH(Graph, start, goal) returns an M-by-1 matrix, where each row
 %   consists of the node on the path.  The first
@@ -29,7 +28,6 @@ if isempty(Graph)
     return;
 end
 
-nodes = unique(Graph(:,1:2));
 %% special case when we start at our goal
 if start == goal
     path = start;
@@ -37,59 +35,52 @@ if start == goal
     return;
 end
 
-%% initialize graph properties
-graph = cell(size(nodes));
-for i = 1:length(nodes)
-    graph{i}.node = nodes(i);
-    [row, col] = find(Graph(:,1:2) == nodes(i));
-    col = mod(col,2)+1;
-    idx_mat = sortrows([row col],1);
-    row = idx_mat(:,1);
-    col = idx_mat(:,2);
-    idx = sub2ind(size(Graph),row, col);
-    
-    children = zeros(size(idx));
-    for j = 1:length(idx)
-        children(j) = nodes(nodes == Graph(idx(j)));
-    end
-    [graph{i}.children, uidx] = unique(children);
-    graph{i}.distances = Graph(row,3);
-    graph{i}.distances = graph{i}.distances(uidx);
-    graph{i}.indices = find(ismember(nodes,graph{i}.children));
-    
+% create symmetric adjacency matrix
+graph = sparse(Graph(:,1),Graph(:,2),Graph(:,3));
+[n,m] = size(graph);
+if n < m
+    graph = vertcat(graph,zeros(m-n,m));
+    n = m;
 end
+if m > n
+    graph = horzcat(graph,zeros(n-m,n));
+end
+graph = graph + graph';
 
-distance = Inf(size(nodes));
-previous = NaN(size(nodes));
-unvisited = true(size(nodes));
-distance(nodes == start) = 0;
-goal_idx = nodes == goal;
+% create distance vector, reference vector, and unvisited set
+distance = Inf(n,1);
+previous = NaN(n,1);
+unvisited = true(n,1);
+distance(start) = 0;
 
-%% loop until we are at our destination or we can't get to our goal
-while unvisited(goal_idx) && min(distance(unvisited)) ~= Inf
+% stay in loop until goal is visited or solution cannot be found
+while unvisited(goal) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
-    [dist, curr_idx] = min(distance./unvisited);
-    current_node = graph{curr_idx}.node;
-    
+    [dist, current_node] = min(distance./unvisited);
+        
     % obtain tentative distances and update distances if necessary
-    tentative = dist + graph{curr_idx}.distances < distance(graph{curr_idx}.indices);
-    distance(graph{curr_idx}.indices(tentative)) = dist + graph{curr_idx}.distances(tentative);
-    previous(graph{curr_idx}.indices(tentative)) = current_node;
+    temp_dist = graph(:,current_node);
+    nonzero = (temp_dist ~= 0).*unvisited;
+    if sum(nonzero)
+        tentative = logical((dist + temp_dist < distance).*nonzero);
+        distance(tentative) = dist + temp_dist(tentative);
+        previous(tentative) = current_node;
+    end
 
     % remove current node from graph
-    unvisited(curr_idx) = false;
+    unvisited(current_node) = false;
 end
-cost = distance(nodes == goal);
+cost = distance(goal);
 
 %% find the path if it exists
 if cost ~= Inf
-    path = NaN(size(nodes));
+    path = NaN(size(distance));
     iterator = length(path);
      path_node = goal;
      while path_node ~= start
          path(iterator) = path_node;
          iterator = iterator - 1;
-         path_node = previous(nodes == path_node);
+         path_node = previous(path_node);
      end
      path(iterator) = start;
      if iterator < length(path)

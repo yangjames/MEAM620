@@ -60,9 +60,9 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
         
     % obtain tentative distances and update distances if necessary
     temp_dist = graph(:,current_node);
-    nonzero = (temp_dist ~= 0).*unvisited;
+    nonzero = (temp_dist ~= 0);
     if sum(nonzero)
-        tentative = logical((dist + temp_dist < distance).*nonzero);
+        tentative = logical((dist + temp_dist < distance).*nonzero.*unvisited);
         distance(tentative) = dist + temp_dist(tentative);
         previous(tentative) = current_node;
     end

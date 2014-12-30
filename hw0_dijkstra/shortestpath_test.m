@@ -4,7 +4,7 @@ clear all
 clc
 
 % the files you want to test
-testEmptyGraph
+%testEmptyGraph
 testGraph1
 end
 
@@ -38,7 +38,7 @@ function testGraph1
 load('sample_graph.mat');
 start = 1;
 goal  = 5;
-[returnedPath, returnedCost] = shortestpath(G, start, goal);
+[returnedPath, returnedCost] = shortestpath(G, start, goal)
 assertPathValid(returnedPath, returnedCost, start, goal, G);
 end
 
@@ -46,7 +46,7 @@ function testEmptyGraph
 load('empty_graph.mat');
 start = 1;
 goal = 4;
-[returnedPath, returnedCost] = shortestpath(G, start, goal);
+[returnedPath, returnedCost] = shortestpath(G, start, goal)
 assertPathValid(returnedPath, returnedCost, start, goal, G);
 end
 

@@ -20,9 +20,6 @@ profile on
 
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
-if nargin ~= 3
-    error('Incorrect number of arguments');
-end
 
 path = zeros(0,1);
 cost = Inf;
@@ -33,12 +30,6 @@ if isempty(Graph)
 end
 
 nodes = unique(Graph(:,1:2));
-
-%% special case when start or goal node does not exist
-if sum(start == nodes) == 0 || sum(goal == nodes) == 0
-    error('Invalid start or goal node');
-end
-
 %% special case when we start at our goal
 if start == goal
     path = start;
@@ -47,49 +38,43 @@ if start == goal
 end
 
 %% initialize graph properties
-graph = {};
+graph = cell(size(nodes));
 for i = 1:length(nodes)
     graph{i}.node = nodes(i);
-    
     [row, col] = find(Graph(:,1:2) == nodes(i));
     col = mod(col,2)+1;
     idx_mat = sortrows([row col],1);
     row = idx_mat(:,1);
     col = idx_mat(:,2);
     idx = sub2ind(size(Graph),row, col);
+    
+    children = zeros(size(idx));
     for j = 1:length(idx)
         children(j) = nodes(nodes == Graph(idx(j)));
     end
     [graph{i}.children, uidx] = unique(children);
     graph{i}.distances = Graph(row,3);
     graph{i}.distances = graph{i}.distances(uidx);
+    graph{i}.indices = find(ismember(nodes,graph{i}.children));
     
-    row = [];
-    col = [];
-    idx_mat = [];
-    idx = [];
-    children = [];
 end
-
-%for i = 1:length(nodes)
-    
-%end
 
 distance = Inf(size(nodes));
 previous = NaN(size(nodes));
 unvisited = true(size(nodes));
 distance(nodes == start) = 0;
+goal_idx = nodes == goal;
 
 %% loop until we are at our destination or we can't get to our goal
-while unvisited(nodes == goal) && min(distance(unvisited)) ~= Inf
+while unvisited(goal_idx) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
     [dist, curr_idx] = min(distance./unvisited);
     current_node = graph{curr_idx}.node;
     
     % obtain tentative distances and update distances if necessary
-    tentative = dist + graph{curr_idx}.distances < distance(ismember(nodes, graph{curr_idx}.children));
-    distance(ismember(nodes, graph{curr_idx}.children(tentative))) = dist+graph{curr_idx}.distances(tentative);
-    previous(ismember(nodes,graph{curr_idx}.children(tentative))) = current_node;
+    tentative = dist + graph{curr_idx}.distances < distance(graph{curr_idx}.indices);
+    distance(graph{curr_idx}.indices(tentative)) = dist + graph{curr_idx}.distances(tentative);
+    previous(graph{curr_idx}.indices(tentative)) = current_node;
 
     % remove current node from graph
     unvisited(curr_idx) = false;

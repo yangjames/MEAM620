@@ -16,10 +16,8 @@ function [path, cost] = shortestpath(Graph, start, goal)
 %      undirected and you can assume that the nodes in Graph are indexed by
 %      1, ..., n where n is the number of nodes in the Graph.
 %
-
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
-
 
 %% initialize graph as an empty path with no cost
 path = zeros(0,1);
@@ -64,10 +62,10 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
     nonzero = (temp_dist ~= 0);
     if sum(nonzero)
         tentative = logical((dist + temp_dist < distance).*nonzero.*unvisited);
-        if sum(tentative)
+        %if sum(tentative)
             distance(tentative) = dist + temp_dist(tentative);
             previous(tentative) = current_node;
-        end
+        %end
     end
     
     % remove current node from graph

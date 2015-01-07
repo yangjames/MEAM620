@@ -35,49 +35,25 @@ if start == goal
     return;
 end
 
-%% filter out repeat edges and minimize multiple paths
+%% prune off repeat edges and minimize multiple paths
 sorted_graph = sortrows([sort(Graph(:,1:2),2) Graph(:,3)]);
-filtered_graph = sorted_graph(1,:);
-for i = 2:size(sorted_graph,1)
-    if logical(ismember(sorted_graph(i,1:2),filtered_graph(end,1:2),'rows'))
-        filtered_graph(end,3) = min([sorted_graph(i,3) filtered_graph(end,3)]);
-    else
-        filtered_graph(end+1,:) = sorted_graph(i,:);
-    end
-end
-%{
-left_nodes = unique(sorted_graph(:,1));
-right_nodes = unique(sorted_graph(:,2));
 filtered_graph = zeros(size(sorted_graph));
-for i = 1:length(left_nodes)
-    idx_l = sorted_graph(:,1) == i;
-    for j = 1:length(right_nodes)
-        idx_r = sorted_graph(idx_l,2) == j;
-        
+filtered_graph(1,:) = sorted_graph(1,:);
+iterator = 1;
+for i = 2:size(sorted_graph,1)
+    if logical(ismember(sorted_graph(i,1:2),filtered_graph(iterator,1:2),'rows'))
+        filtered_graph(iterator,3) = min([sorted_graph(i,3) filtered_graph(iterator,3)]);
+    else
+        iterator = iterator+1;
+        filtered_graph(iterator,:) = sorted_graph(i,:);
     end
 end
-%}
-%{
-not_checked = true(size(Graph,1),1);
-new_graph = zeros(size(Graph));
-iteration = 1;
-Graph_nodes = Graph(:,1:2);
-Graph_nodes_t = fliplr(Graph_nodes);
-while sum(not_checked)
-    test_edges = Graph_nodes(not_checked,:);
-    test_edge = test_edges(1,:);
-    repeats = (ismember(Graph_nodes, test_edge, 'rows') | ismember(Graph_nodes_t, test_edge, 'rows')) & not_checked;
-    val = min(Graph(repeats,3));
-    new_graph(iteration,:) = [test_edge, val];
-    iteration = iteration+1;
-    not_checked(repeats) = false;
+if iterator < size(sorted_graph,1)
+    filtered_graph(iterator+1:end,:) = [];
 end
-new_graph(iteration:end,:) = [];
-%}
 
 %% restructure the graph as a sparse symmetric adjacency matrix
 graph = sparse(filtered_graph(:,1),filtered_graph(:,2),filtered_graph(:,3));
-%graph = sparse(Graph(:,1), Graph(:,2), Graph(:,3));
 [n,m] = size(graph);
 if n < m
     graph = vertcat(graph,zeros(m-n,m));
@@ -88,12 +64,12 @@ else if m < n
 end
 graph = graph + graph';
 
+%% loop until goal is visited or is determined to be unreachable
 distance = Inf(n,1);
 previous = NaN(n,1);
 unvisited = sparse(true(n,1));
 distance(start) = 0;
 
-%% loop until goal is visited or is determined to be unreachable
 while unvisited(goal) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
     [dist, current_node] = min(distance./unvisited);

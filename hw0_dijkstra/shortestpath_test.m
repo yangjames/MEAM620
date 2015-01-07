@@ -6,6 +6,7 @@ clc
 % the files you want to test
 %testEmptyGraph
 testGraph1
+%testGraph2
 end
 
 function assertPathValid(returnedPath, returnedCost, start, goal, G)
@@ -46,7 +47,15 @@ function testEmptyGraph
 load('empty_graph.mat');
 start = 1;
 goal = 4;
-[returnedPath, returnedCost] = shortestpath(G, start, goal)
+[returnedPath, returnedCost] = shortestpath(G, start, goal);
 assertPathValid(returnedPath, returnedCost, start, goal, G);
 end
 
+function testGraph2
+G=[1 2 1; 1 2 2; 1 2 3];
+start = 1;
+goal = 2;
+returnedPath = [1;2];
+returnedCost = 1;
+assertPathValid(returnedPath,returnedCost,start,goal,G);
+end

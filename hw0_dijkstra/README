@@ -1,0 +1,7 @@
+Graph representation method: sparse symmetric adjacency matrix
+Order of operations:
+      1) Ensure that the function returns as fast as possible if we are given a special case (empty graph, start = goal, etc)
+      2) Prune off repeated edges
+      3) Generate new form of graph as a sparse adjacency matrix
+      4) Loop until completion Dijkstra's algorithm, vectorizing as much as possible
+      5) Find the path based on minimum distances found

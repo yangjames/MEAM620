@@ -1,6 +1,5 @@
 function [path, cost] = shortestpath(Graph, start, goal)
 
-%profile on
 % SHORTESTPATH Find the shortest path from start to goal on the given Graph.
 %   PATH = SHORTESTPATH(Graph, start, goal) returns an M-by-1 matrix, where each row
 %   consists of the node on the path.  The first
@@ -20,7 +19,7 @@ function [path, cost] = shortestpath(Graph, start, goal)
 %
 % Hint: You may consider constructing a different graph structure to speed up
 % you code.
-tic
+
 %% initialize graph as an empty path with no cost
 path = zeros(0,1);
 cost = 0;
@@ -39,21 +38,8 @@ end
 
 %% prune off repeat edges and minimize multiple paths
 sorted_graph = sortrows([sort(Graph(:,1:2),2) Graph(:,3)]);
-filtered_graph = zeros(size(sorted_graph));
-filtered_graph(1,:) = sorted_graph(1,:);
-iterator = 1;
-for i = 2:size(sorted_graph,1)
-    if sum(sorted_graph(i,1:2) == filtered_graph(iterator,1:2)) == 2
-        filtered_graph(iterator,3) = min([sorted_graph(i,3) filtered_graph(iterator,3)]);
-    else
-        iterator = iterator+1;
-        filtered_graph(iterator,:) = sorted_graph(i,:);
-    end
-end
-if iterator < size(sorted_graph,1)
-    filtered_graph(iterator+1:end,:) = [];
-end
-prune_time = toc;
+labeled_edges = 10*sorted_graph(:,1)+sorted_graph(:,2);
+filtered_graph = sorted_graph([true; labeled_edges(2:end) ~= labeled_edges(1:end-1)],:);
 
 %% restructure the graph as a sparse symmetric adjacency matrix
 graph = sparse(filtered_graph(:,1),filtered_graph(:,2),filtered_graph(:,3));
@@ -67,15 +53,10 @@ else if m < n
 end
 graph = graph + graph';
 
-restructure_time = toc;
-
 %% loop until goal is visited or is determined to be unreachable
-%stats = [Inf(n,1) NaN(n,1) (1:n)'];
-%stats(start,1) = 0;
-
 distance = Inf(n,1);
 previous = NaN(n,1);
-nodes = 1:n;
+nodes = (1:n)';
 unvisited = sparse(true(n,1));
 distance(start) = 0;
 
@@ -89,16 +70,15 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
     temp_dist = graph(:, current_node);
     nonzero = (temp_dist ~= 0);
     if sum(nonzero)
-        tentative = (dist + temp_dist < distance) & nonzero & unvisited;
+        tentative = (dist + temp_dist < distance & nonzero) & unvisited;
         distance(tentative) = dist + temp_dist(tentative);
         previous(tentative) = current_node;
     end
     
     % remove current node from graph
-    unvisited(current_node) = false;
+    unvisited(current_node,1) = false;
 end
 
-dijkstra_time = toc;
 %% find the path if it exists
 cost = distance(goal);
 if cost ~= Inf
@@ -113,7 +93,3 @@ if cost ~= Inf
     path(iterator) = start;
     path(1:iterator-1) = [];
 end
-pathgen_time = toc;
-
-fprintf('prune time: %6.6f\nrestructure time: %6.6f\ndijkstra time: %6.6f\npathgen_time: %6.6f\ntotal time: %6.6f',...
-    prune_time, restructure_time-prune_time, dijkstra_time-restructure_time, pathgen_time-dijkstra_time,pathgen_time)

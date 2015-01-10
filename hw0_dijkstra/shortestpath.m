@@ -61,7 +61,6 @@ unvisited = sparse(true(n,1));
 unvisited_full = full(unvisited);
 distance(start) = 0;
 
-%while unvisited_full(goal) && min(distance(unvisited)) ~= Inf
 while unvisited_full(goal)
     % get unvisited node with smallest distance
     [dist,idx] = min(distance(unvisited));

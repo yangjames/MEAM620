@@ -58,9 +58,10 @@ distance = Inf(n,1);
 previous = NaN(n,1);
 nodes = (1:n)';
 unvisited = sparse(true(n,1));
+unvisited_full = full(unvisited);
 distance(start) = 0;
 
-while unvisited(goal) && min(distance(unvisited)) ~= Inf
+while unvisited_full(goal) && min(distance(unvisited)) ~= Inf
     % get unvisited node with smallest distance
     [dist,idx] = min(distance(unvisited));
     temp = nodes(unvisited);
@@ -70,13 +71,14 @@ while unvisited(goal) && min(distance(unvisited)) ~= Inf
     temp_dist = graph(:, current_node);
     nonzero = (temp_dist ~= 0);
     if sum(nonzero)
-        tentative = (dist + temp_dist < distance & nonzero) & unvisited;
+        tentative = ((dist + temp_dist < distance) & nonzero) & unvisited_full;
         distance(tentative) = dist + temp_dist(tentative);
         previous(tentative) = current_node;
     end
     
     % remove current node from graph
     unvisited(current_node,1) = false;
+    unvisited_full(current_node) = false;
 end
 
 %% find the path if it exists

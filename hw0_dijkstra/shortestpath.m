@@ -54,35 +54,90 @@ end
 graph = graph + graph';
 
 %% loop until goal is visited or is determined to be unreachable
+distance = [Inf(n,1) (1:n)'];
+distance(start,:) = [Inf 1];
+distance(1,:) = [0 start];
+heap_len = n;
+
+previous = NaN(n,1);
+visited = [zeros(n,1) Inf(n,1)];
+
+p = 1;
+while ~visited(goal,1)
+    % get unvisited node with smallest distance
+    dist = distance(1,1);
+    if dist == Inf
+        break;
+    end
+    current_node = distance(1,2);
+    visited(current_node,:) = [1 dist];
+    
+    % obtain tentative distances
+    org_idx = distance(1:heap_len,2);
+    [rows,~,temp_dist] = find(graph(org_idx,current_node));
+    
+    % update distances
+    for i = 1:length(rows)
+        add_idx = distance(1:heap_len,2) == org_idx(rows(i));
+        if dist + temp_dist(i) < distance(add_idx,1)
+            distance(add_idx,1) = dist + temp_dist(i);
+            previous(distance(rows(i),2)) = current_node;
+        end
+        distance = add_node(distance,find(add_idx));
+    end
+    
+    % remove current node from heap
+    distance(1,:) = distance(heap_len,:);
+    heap_len = heap_len-1;
+    distance = delete_node(distance,1,heap_len);
+    p = p+1;
+end
+
+%% find the path if it exists
+cost = visited(goal,2);
+if cost ~= Inf
+    path = NaN(size(visited,1),1);
+    iterator = length(path);
+    path_node = goal;
+    while path_node ~= start
+        path(iterator) = path_node;
+        iterator = iterator - 1;
+        path_node = previous(path_node);
+    end
+    path(iterator) = start;
+    path(1:iterator-1) = [];
+end
+
+%{
 distance = Inf(n,1);
 previous = NaN(n,1);
 nodes = (1:n)';
 unvisited = sparse(true(n,1));
-unvisited_full = full(unvisited);
+unvisited_full = true(n,1);
 distance(start) = 0;
 
 while unvisited_full(goal)
     % get unvisited node with smallest distance
     [dist,idx] = min(distance(unvisited));
-    if dist ~= Inf
-        temp = nodes(unvisited);
-        current_node = temp(idx);
-
-        % obtain tentative distances and update distances if necessary
-        temp_dist = graph(:, current_node);
-        nonzero = (temp_dist ~= 0);
-        if sum(nonzero)
-            tentative = ((dist + temp_dist < distance) & nonzero) & unvisited_full;
-            distance(tentative) = dist + temp_dist(tentative);
-            previous(tentative) = current_node;
-        end
-
-        % remove current node from graph
-        unvisited(current_node,1) = false;
-        unvisited_full(current_node) = false;
-    else
-        break
+    if dist == Inf
+        break;
     end
+    temp = nodes(unvisited);
+    current_node = temp(idx);
+        
+    % obtain tentative distances and update distances if necessary
+    temp_dist = graph(:, current_node);
+    nonzero = (temp_dist ~= 0);
+    if sum(nonzero)
+        tentative = ((dist + temp_dist < distance) & nonzero) & unvisited;
+        %tentative = unvisited & (nonzero & (distance > dist + temp_dist));
+        distance(tentative) = dist + temp_dist(tentative);
+        previous(tentative) = current_node;
+    end
+    
+    % remove current node from graph
+    unvisited(current_node,1) = false;
+    unvisited_full(current_node) = false;
 end
 
 %% find the path if it exists
@@ -99,3 +154,4 @@ if cost ~= Inf
     path(iterator) = start;
     path(1:iterator-1) = [];
 end
+%}

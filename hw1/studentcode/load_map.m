@@ -16,7 +16,7 @@ valid_boundary = regexp(split_texts,'^\s*boundary(\s*\d+\.?\d*){6}');
 valid_blocks = regexp(split_texts,'^\s*block(\s*\d+\.?\d*){9}');
 
 % get indices of valid phrases
-blocks_idx = find(~cellfun(@isempty, valid_blocks))
+blocks_idx = find(~cellfun(@isempty, valid_blocks));
 
 % extract boundary and obstacle values
 boundary_text = split_texts{~cellfun(@isempty,valid_boundary)};
@@ -27,6 +27,6 @@ for i = 1:length(blocks_idx)
     blocks(:,i) = cell2mat(textscan(block_text(length('block')+1:end), '%f'));
 end
 
-
+%% create map
 map = zeros(0, 0);
 end

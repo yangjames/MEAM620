@@ -41,19 +41,11 @@ boundary = blocks(boundary_idx,1:6);
 blocks(boundary_idx,:) = [];
 
 %% create map
-num_rows = ceil(boundary(4)/xy_res);
-num_cols = ceil(boundary(5)/xy_res);
-num_plane = num_rows*num_cols;
-num_depth = ceil(boundary(6)/z_res);
-num_nodes = num_plane*num_depth;
-
-
-
 map.boundary = boundary;
 map.blocks = blocks;
 map.xy_res = xy_res;
 map.z_res = z_res;
 map.margin = margin;
 
-plot_path(map,1);
+%plot_path(map,[]);
 end

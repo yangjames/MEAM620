@@ -15,7 +15,6 @@ margin = [map.margin map.margin map.margin -map.margin -map.margin -map.margin];
 n_bound = map.boundary;% + margin;
 n_blocks = repmat(bsxfun(@minus, map.blocks(:,1:6), margin),size(points,1),1);
 
-points = repmat(points,1,2);
 %% get points that are out of bounds
 ob = sum(bsxfun(@gt, n_bound(1:3), points) | bsxfun(@lt, n_bound(4:6), points),2)>0;
 

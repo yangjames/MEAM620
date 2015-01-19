@@ -15,7 +15,6 @@ function [path, num_expanded] = dijkstra(map, start, goal, astar)
 if nargin < 4
     astar = false;
 end
-
 path = zeros(0,3);
 num_expanded = 0;
 if isempty(map.boundary) || collide(map,start) || collide(map,goal)
@@ -35,11 +34,21 @@ goal_node = xyz_to_node(map,goal);
 
 %% initialize storage variables
 nodes = (1:num_nodes)';
-distance = Inf(num_nodes,1);
+g_score = Inf(num_nodes,1);
 previous = NaN(num_nodes,1);
-unvisited = sparse(true(num_nodes,1));
+unvisited = sparse(collide(map,nodes));
+%unvisited = sparse(true(num_nodes,1));
 unvisited_full = full(unvisited);
-distance(start_node,:) = 0;
+g_score(start_node) = 0;
+
+%% calculate heuristic for each node
+if astar
+    heuristic = sum(bsxfun(@minus,node_to_xyz(map,nodes),goal).^2,2);
+else
+    heuristic = sparse(zeros(size(nodes)));
+end
+f_score = Inf(num_nodes,1);
+f_score(start_node) = heuristic(start_node);
 
 %% initialize 26-connected neighbors coordinates and distances
 neighbors_26 = [repmat([-map.xy_res; 0; map.xy_res],9,1)...
@@ -49,6 +58,7 @@ neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
 
+%% plotting stuff
 figure(2)
 clf
 h2 = plot3(start(1),start(2),start(3),'g*');
@@ -67,42 +77,39 @@ h4 = plot3(0,0,0,'b.');
 
 plot_path(map,path);
 iterator = 0;
+
 %% loop until algorithm is complete
 while unvisited_full(goal_node)
     % get unvisited node with smallest distance
-    [dist,idx] = min(distance(unvisited));
-    if dist == Inf
+    [min_f,idx] = min(f_score(unvisited));
+    if min_f == Inf
         break;
     end
     temp = nodes(unvisited);
     current_node = temp(idx);
-        
-    % obtain neighbors
-    current_coord = node_to_xyz(map,current_node);
-    neighbors_coord = bsxfun(@plus,neighbors_26,current_coord);
-    neighbors_nodes = xyz_to_node(map,neighbors_coord);
-    c = ~collide(map,neighbors_coord) & unvisited_full(neighbors_nodes);
-    
-    % obtain tentative distances and update distances if necessary
-    tentative = (dist + neighbors_dist < distance(neighbors_nodes)) & c;
-    distance(neighbors_nodes(tentative)) = dist + neighbors_dist(tentative);
-    previous(neighbors_nodes(tentative)) = current_node;
     
     % remove current node from graph
     unvisited(current_node,1) = false;
     unvisited_full(current_node) = false;
     
-    % apply heuristic
-    if astar
-        %heuristic = sqrt(sum(bsxfun(@minus,neighbors_coord,goal).^2,2));
-        heuristic = sqrt(sum(bsxfun(@minus,node_to_xyz(map,nodes(unvisited)),goal).^2,2));
-    else
-        heuristic = 0;
-    end
-    distance(unvisited) = distance(unvisited) + heuristic;
+    % obtain neighbors
+    current_coord = node_to_xyz(map,current_node);
+    neighbors_coord = bsxfun(@plus,neighbors_26,current_coord);
+    c = ~collide(map,neighbors_coord);
     
-    if ~mod(iterator,1)
-        coord = node_to_xyz(map,nodes(~isinf(distance) & unvisited));
+    % obtain tentative distances and update distances if necessary
+    if sum(c)
+        cidx = find(c);
+        neighbors_nodes = xyz_to_node(map,neighbors_coord(cidx,:));
+        tentative = (g_score(current_node) + neighbors_dist(cidx) < g_score(neighbors_nodes)) & unvisited(neighbors_nodes);
+        g_score(neighbors_nodes(tentative)) = g_score(current_node) + neighbors_dist(tentative);
+        f_score(neighbors_nodes(tentative)) = g_score(neighbors_nodes(tentative)) + heuristic(neighbors_nodes(tentative));
+        previous(neighbors_nodes(tentative)) = current_node;
+    end
+    
+    %% more plotting stuff
+    if ~mod(iterator,100)
+        coord = node_to_xyz(map,nodes(~isinf(g_score) & unvisited));
         set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
         set(h4,'Xdata',neighbors_coord(:,1),'YData',neighbors_coord(:,2),'ZData',neighbors_coord(:,3));
     end
@@ -111,9 +118,9 @@ while unvisited_full(goal_node)
 end
 
 %% find the path if it exists
-cost = distance(goal_node);
+cost = g_score(goal_node);
 if cost ~= Inf
-    node_path = NaN(size(distance));
+    node_path = NaN(size(g_score));
     iterator = length(node_path);
     path_node = goal_node;
     while path_node ~= start_node
@@ -123,8 +130,10 @@ if cost ~= Inf
     end
     node_path(iterator) = start_node;
     node_path(1:iterator-1) = [];
+    path = node_to_xyz(map,node_path);
+    path(1,:) = start;
+    path(end,:) = goal;
+    num_expanded = sum(~unvisited);
 end
-path = node_to_xyz(map,node_path);
-num_expanded = sum(~unvisited);
 plot_path(map,path);
 end

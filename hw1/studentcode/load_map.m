@@ -46,6 +46,4 @@ map.blocks = blocks;
 map.xy_res = xy_res;
 map.z_res = z_res;
 map.margin = margin;
-
-%plot_path(map,[]);
 end

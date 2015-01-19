@@ -21,13 +21,13 @@ xyzs = [x(:), y(:), z(:)];
 end
 
 function testEmptyMap(testcase)
-map = load_map('emptyMap.txt', 0.2, 2.0, 0.0);
+map = load_map('sample_maps/emptyMap.txt', 0.2, 2.0, 0.0);
 points = grid(0:0.1:10, 0:0.1:10, 0:1.0:6.0);
 assertNoCollision(testcase, map, points);
 end
 
 function testSingleCube(testcase)
-map = load_map('singleCube.txt', 0.1, 1.0, 0.0);
+map = load_map('sample_maps/singleCube.txt', 0.1, 1.0, 0.0);
 top_points    = grid(0:0.1:10, 0:0.1:10, 4.1:0.4:6);
 left_points   = grid(0:0.2:4.4, 0:0.2:10, 0:0.4:6);
 right_points  = grid(5.6:0.2:10, 0:0.2:10, 0:0.4:6);
@@ -42,7 +42,7 @@ assertCollision(testcase, map, square_points);
 end
 
 function testMap1(testcase)
-map = load_map('map1.txt', 0.2, 0.5, 0.2);
+map = load_map('sample_maps/map0.txt', 0.2, 0.5, 0.2);
 
 valid = [0.0  -1.0 2.0; 
          3.0  17.0 4.0; 

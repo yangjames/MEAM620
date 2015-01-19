@@ -5,7 +5,7 @@ function map = load_map(filename, xy_res, z_res, margin)
 %  on abstacle.
 
 %{
-%% parse text file for boundary and obstacles
+%% parse text file for boundary and obstacles using regex
 % read in text file
 text = fileread(filename);
 
@@ -29,7 +29,7 @@ for i = 1:length(blocks_idx)
 end
 %}
 
-%% alternate version
+%% parse text file for boundary and obstacles using textscan
 fid = fopen(filename);
 C = textscan(fid,'%s %f %f %f %f %f %f %f %f %f',...
     'TreatAsEmpty',{'NA','na'},'CommentStyle','#');

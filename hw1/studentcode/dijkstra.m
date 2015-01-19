@@ -15,6 +15,53 @@ function [path, num_expanded] = dijkstra(map, start, goal, astar)
 if nargin < 4
     astar = false;
 end
-path = [];
-num_expanded = 0;
+
+if isempty(map.boundary) || collide(map,start) || collide(map,goal)
+    path = [];
+    num_expanded = 0;
+end
+
+%% define map characteristics
+num_rows = floor((map.boundary(4)-map.boundary(1))/map.xy_res)+1;
+num_cols = floor((map.boundary(5)-map.boundary(2))/map.xy_res)+1;
+num_depth = floor((map.boundary(6)-map.boundary(3))/map.z_res)+1;
+num_plane = num_rows*num_cols;
+num_nodes = num_depth*num_plane;
+
+%% define key nodes
+start_node = xyz_to_node(map,start);
+goal_node = xyz_to_node(map,goal);
+first_node = xyz_to_node(map,map.boundary(1:3));
+last_node = xyz_to_node(map,map.boundary(4:6));
+
+%% initialize storage variables
+nodes = (first_node:last_node)';
+distance = [Inf(num_nodes,1) nodes];
+previous = NaN(num_nodes,1);
+unvisited = sparse(true(num_nodes,1));
+unvisited_full = full(unvisited);
+distance(1,:) = [0 start_node];
+distance(start_node-first_node+1,:) = [Inf 1];
+
+neighbors_26 = [repmat([-map.xy_res;0;map.xy_res],9,1)...
+    repmat([repmat(-map.xy_res,3,1);repmat(0,3,1);repmat(map.xy_res,3,1)],3,1)...
+    [repmat(-map.z_res,9,1);repmat(0,9,1);repmat(map.z_res,9,1)]];
+neighbors_dist = sqrt(sum(neighbors_26.^2,2));
+neighbors_26(14,:) = [];
+neighbors_dist(14) = [];
+            
+% loop until algorithm is complete
+while ~unvisited_full(goal_node-first_node+1)
+    % get current node
+    dist = distance(1,1);
+        
+    if dist == Inf
+       break;
+    end
+    current_node = distance(1,2);
+    
+    current_coord = node_to_xyz(map,current_node);
+    neighbors_coord = bsxfun(@plus,neighbors_26,current_coord);
+    neighbors_nodes = xyz_to_node(map,neighbors_coord);
+    
 end

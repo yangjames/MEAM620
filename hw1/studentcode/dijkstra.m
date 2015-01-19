@@ -31,37 +31,101 @@ num_nodes = num_depth*num_plane;
 %% define key nodes
 start_node = xyz_to_node(map,start);
 goal_node = xyz_to_node(map,goal);
-first_node = xyz_to_node(map,map.boundary(1:3));
-last_node = xyz_to_node(map,map.boundary(4:6));
 
 %% initialize storage variables
-nodes = (first_node:last_node)';
-distance = [Inf(num_nodes,1) nodes];
+nodes = (1:num_nodes)';
+distance = Inf(num_nodes,1);
 previous = NaN(num_nodes,1);
 unvisited = sparse(true(num_nodes,1));
 unvisited_full = full(unvisited);
-distance(1,:) = [0 start_node];
-distance(start_node-first_node+1,:) = [Inf 1];
+distance(start_node,:) = 0;
 
-neighbors_26 = [repmat([-map.xy_res;0;map.xy_res],9,1)...
-    repmat([repmat(-map.xy_res,3,1);repmat(0,3,1);repmat(map.xy_res,3,1)],3,1)...
-    [repmat(-map.z_res,9,1);repmat(0,9,1);repmat(map.z_res,9,1)]];
+%% initialize 26-connected neighbors coordinates and distances
+neighbors_26 = [repmat([-map.xy_res; 0; map.xy_res],9,1)...
+    repmat([repmat(-map.xy_res,3,1); zeros(3,1); repmat(map.xy_res,3,1)],3,1)...
+    [repmat(-map.z_res,9,1); zeros(9,1); repmat(map.z_res,9,1)]];
 neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
-            
-% loop until algorithm is complete
-while ~unvisited_full(goal_node-first_node+1)
-    % get current node
-    dist = distance(1,1);
-        
-    if dist == Inf
-       break;
+
+figure(2)
+clf
+h2 = plot3(start(1),start(2),start(3),'g*');
+hold on
+grid on
+xlabel('x')
+ylabel('y')
+zlabel('z')
+axis equal
+xlim(map.boundary([1,4]))
+ylim(map.boundary([2,5]))
+zlim(map.boundary([3,6]))
+h3 = plot3(goal(1),goal(2),goal(3),'r*');
+h1 = plot3(0,0,0,'k*');
+h4 = plot3(0,0,0,'b*');
+
+%% loop until algorithm is complete
+while unvisited_full(goal_node)
+    %{
+    iterator = 1;
+    coord = node_to_xyz(map,iterator);
+    h5 = plot3(coord(1),coord(2),coord(3),'k*');
+    while(iterator < num_nodes)
+        iterator = iterator+1;
+        coord = node_to_xyz(map,iterator);
+        set(h5,'XData',coord(1),'YData',coord(2),'ZData',coord(3));
     end
-    current_node = distance(1,2);
-    
+    %}
+    % get unvisited node with smallest distance
+    [dist,idx] = min(distance(unvisited));
+    if dist == Inf
+        break;
+    end
+    temp = nodes(unvisited);
+    current_node = temp(idx);
+        
+    % obtain neighbors
     current_coord = node_to_xyz(map,current_node);
     neighbors_coord = bsxfun(@plus,neighbors_26,current_coord);
     neighbors_nodes = xyz_to_node(map,neighbors_coord);
+    c = ~collide(map,neighbors_coord) & unvisited_full(neighbors_nodes);
     
+    % obtain tentative distances and update distances if necessary
+    if astar
+        heuristic = sqrt(sum(bsxfun(@minus,neighbors_coord,goal).^2,2));
+    else
+        heuristic = 0;
+    end
+    tentative = (dist + neighbors_dist + heuristic < distance(neighbors_nodes)) & c;
+    distance(neighbors_nodes(tentative)) = dist + neighbors_dist(tentative) + heuristic(tentative);
+    previous(neighbors_nodes(tentative)) = current_node;
+    
+    % remove current node from graph
+    unvisited(current_node,1) = false;
+    unvisited_full(current_node) = false;
+    
+    coord = node_to_xyz(map,find(~unvisited_full));
+    figure(1)
+    set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
+    set(h4,'Xdata',neighbors_coord(:,1),'YData',neighbors_coord(:,2),'ZData',neighbors_coord(:,3));
+    drawnow
+end
+
+%% find the path if it exists
+cost = distance(goal_node);
+if cost ~= Inf
+    node_path = NaN(size(distance));
+    iterator = length(node_path);
+    path_node = goal_node;
+    while path_node ~= start_node
+        node_path(iterator) = path_node;
+        iterator = iterator - 1;
+        path_node = previous(path_node);
+    end
+    node_path(iterator) = start_node;
+    node_path(1:iterator-1) = [];
+end
+path = node_to_xyz(map,node_path);
+num_expanded = sum(~unvisited);
+plot_path(map,path);
 end

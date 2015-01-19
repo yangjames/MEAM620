@@ -1,4 +1,7 @@
-function h = plot_map(boundary, blocks, test_points, margin)
+function plot_map(map, test_points)
+boundary = map.boundary;
+blocks = map.blocks;
+margin = map.margin;
 figure(1)
 clf
 h = zeros(2+size(blocks,1),1);
@@ -18,7 +21,6 @@ for i = 2:size(blocks,1)
     h(i) = patch(x,y,z,blocks(i,7:9)/255);
 end
 [x,y,z] = sphere(10);
-test_points
 for i = size(blocks,1)+1:size(test_points,1)+size(blocks,1)
     idx = i - size(blocks,1);
     h(i) = surf(x*margin+test_points(idx,1),...

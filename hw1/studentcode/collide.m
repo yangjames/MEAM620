@@ -5,7 +5,7 @@ function [C] = collide(map, points)
 %   C(i) = 1 if M(i, :) touches an obstacle and is 0 otherwise.
 
 %% check for empty map
-if isempty(map.boundary) || isempty(points)
+if isempty(map.boundary)
     C = 0;
     return;
 end

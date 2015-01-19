@@ -20,4 +20,7 @@ for i = 2:size(map.blocks,1)
     [x,y,z] = get_rect_vals(map.blocks(i,:));
     h(i) = patch(x,y,z,map.blocks(i,7:9)/255);
 end
+if ~isempty(path)
+    h(end+1) = plot3(path(:,1),path(:,2),path(:,3),'k-');
+end
 end

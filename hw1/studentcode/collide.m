@@ -19,5 +19,4 @@ for i = 1:size(points,1)
     co(i) = sum(inside)>0;
 end
 C = co|ob;
-%plot_map(map.boundary,map.blocks,points,map.margin);
 end

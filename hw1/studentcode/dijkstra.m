@@ -16,9 +16,10 @@ if nargin < 4
     astar = false;
 end
 
+path = zeros(0,3);
+num_expanded = 0;
 if isempty(map.boundary) || collide(map,start) || collide(map,goal)
-    path = [];
-    num_expanded = 0;
+    return;
 end
 
 %% define map characteristics
@@ -61,21 +62,13 @@ xlim(map.boundary([1,4]))
 ylim(map.boundary([2,5]))
 zlim(map.boundary([3,6]))
 h3 = plot3(goal(1),goal(2),goal(3),'r*');
-h1 = plot3(0,0,0,'k*');
-h4 = plot3(0,0,0,'b*');
+h1 = plot3(0,0,0,'y.');
+h4 = plot3(0,0,0,'b.');
 
+plot_path(map,path);
+iterator = 0;
 %% loop until algorithm is complete
 while unvisited_full(goal_node)
-    %{
-    iterator = 1;
-    coord = node_to_xyz(map,iterator);
-    h5 = plot3(coord(1),coord(2),coord(3),'k*');
-    while(iterator < num_nodes)
-        iterator = iterator+1;
-        coord = node_to_xyz(map,iterator);
-        set(h5,'XData',coord(1),'YData',coord(2),'ZData',coord(3));
-    end
-    %}
     % get unvisited node with smallest distance
     [dist,idx] = min(distance(unvisited));
     if dist == Inf
@@ -91,24 +84,30 @@ while unvisited_full(goal_node)
     c = ~collide(map,neighbors_coord) & unvisited_full(neighbors_nodes);
     
     % obtain tentative distances and update distances if necessary
-    if astar
-        heuristic = sqrt(sum(bsxfun(@minus,neighbors_coord,goal).^2,2));
-    else
-        heuristic = 0;
-    end
-    tentative = (dist + neighbors_dist + heuristic < distance(neighbors_nodes)) & c;
-    distance(neighbors_nodes(tentative)) = dist + neighbors_dist(tentative) + heuristic(tentative);
+    tentative = (dist + neighbors_dist < distance(neighbors_nodes)) & c;
+    distance(neighbors_nodes(tentative)) = dist + neighbors_dist(tentative);
     previous(neighbors_nodes(tentative)) = current_node;
     
     % remove current node from graph
     unvisited(current_node,1) = false;
     unvisited_full(current_node) = false;
     
-    coord = node_to_xyz(map,find(~unvisited_full));
-    figure(1)
-    set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
-    set(h4,'Xdata',neighbors_coord(:,1),'YData',neighbors_coord(:,2),'ZData',neighbors_coord(:,3));
+    % apply heuristic
+    if astar
+        %heuristic = sqrt(sum(bsxfun(@minus,neighbors_coord,goal).^2,2));
+        heuristic = sqrt(sum(bsxfun(@minus,node_to_xyz(map,nodes(unvisited)),goal).^2,2));
+    else
+        heuristic = 0;
+    end
+    distance(unvisited) = distance(unvisited) + heuristic;
+    
+    if ~mod(iterator,1)
+        coord = node_to_xyz(map,nodes(~isinf(distance) & unvisited));
+        set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
+        set(h4,'Xdata',neighbors_coord(:,1),'YData',neighbors_coord(:,2),'ZData',neighbors_coord(:,3));
+    end
     drawnow
+    iterator = iterator+1;
 end
 
 %% find the path if it exists

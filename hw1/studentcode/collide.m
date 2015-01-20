@@ -12,7 +12,7 @@ end
 
 %% get true bounds
 margin = [map.margin map.margin map.margin -map.margin -map.margin -map.margin];
-n_bound = map.boundary;% + margin;
+n_bound = map.boundary + margin;
 n_blocks = repmat(bsxfun(@minus, map.blocks(:,1:6), margin),size(points,1),1);
 
 %% get points that are out of bounds

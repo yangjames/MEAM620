@@ -73,7 +73,6 @@ ylim(map.boundary([2,5]))
 zlim(map.boundary([3,6]))
 h3 = plot3(goal(1),goal(2),goal(3),'r*');
 h1 = plot3(0,0,0,'y.');
-h4 = plot3(0,0,0,'b.');
 
 plot_path(map,path);
 iterator = 0;
@@ -108,10 +107,9 @@ while unvisited_full(goal_node)
     end
     
     %% more plotting stuff
-    if ~mod(iterator,100)
+    if ~mod(iterator,10)
         coord = node_to_xyz(map,nodes(~isinf(g_score) & unvisited));
         set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
-        set(h4,'Xdata',neighbors_coord(:,1),'YData',neighbors_coord(:,2),'ZData',neighbors_coord(:,3));
     end
     drawnow
     iterator = iterator+1;

@@ -42,9 +42,9 @@ heap_len = num_nodes;
 
 % heuristic initialization
 if astar
-    heuristic = sum(bsxfun(@minus,node_to_xyz(map,node_heap),goal).^2,2);
+    heuristic = sum(bsxfun(@minus,node_to_xyz(map,(1:num_nodes)'),goal).^2,2);
 else
-    heuristic = sparse(zeros(size(node_heap)));
+    heuristic = sparse(zeros(num_nodes,1));
 end
 
 % actual cost
@@ -68,7 +68,6 @@ neighbors_dist(14) = [];
 
 %% plotting stuff
 debug = 1;
-debug2 = 0;
 if debug
     figure(2)
     clf
@@ -111,10 +110,10 @@ while node_heap(1) ~= goal_node
         left = idx*2;
         right = idx*2+1;
         smallest = idx;
-        if left <= heap_len && g_score(node_heap(left)) < g_score(node_heap(smallest))
+        if left <= heap_len && f_score(node_heap(left)) < f_score(node_heap(smallest))
             smallest = left;
         end
-        if right <= heap_len && g_score(node_heap(right)) < g_score(node_heap(smallest))
+        if right <= heap_len && f_score(node_heap(right)) < f_score(node_heap(smallest))
             smallest = right;
         end
         if smallest ~= idx
@@ -162,14 +161,11 @@ while node_heap(1) ~= goal_node
             end
         end
     end
-
-    % update heuristic costs
-    %f_score(node_heap) = g_score(node_heap) + heuristic(node_heap);
     
     %% more plotting stuff
     if debug
-        if ~mod(iterator,1000)
-            coord = node_to_xyz(map,visited(visited~=0));
+        if ~mod(iterator,10)
+            coord = node_to_xyz(map,visited(visited~=0 & ~isinf(g_score)));
             set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
         end
         drawnow
@@ -178,9 +174,9 @@ while node_heap(1) ~= goal_node
 end
 
 %% find the path if it exists
-cost = heap(goal_node);
+cost = g_score(goal_node);
 if cost ~= Inf
-    node_path = NaN(size(heap));
+    node_path = NaN(size(node_heap));
     iterator = length(node_path);
     path_node = goal_node;
     while path_node ~= start_node

@@ -34,6 +34,7 @@ goal_node = xyz_to_node(map,goal);
 
 %% initialize storage variables and heuristic
 % heap indices
+org_nodes = (1:num_nodes)';
 node_heap = (1:num_nodes)';
 node_heap(1) = start_node;
 node_heap(start_node) = 1;
@@ -42,7 +43,7 @@ heap_len = num_nodes;
 
 % heuristic initialization
 if astar
-    heuristic = sum(bsxfun(@minus,node_to_xyz(map,(1:num_nodes)'),goal).^2,2);
+    heuristic = sqrt(sum(bsxfun(@minus,node_to_xyz(map,(1:num_nodes)'),goal).^2,2));
 else
     heuristic = sparse(zeros(num_nodes,1));
 end
@@ -91,11 +92,12 @@ end
 
 %% loop until algorithm is complete
 while node_heap(1) ~= goal_node
-    % obtain minimum and check exit condition
+    % obtain minimum node and check exit condition
     if f_score(node_heap(1)) == Inf
         return;
     end
     current_node = node_heap(1);
+    
     visited(current_node) = current_node;
     
     % remove current node from heap
@@ -164,8 +166,8 @@ while node_heap(1) ~= goal_node
     
     %% more plotting stuff
     if debug
-        if ~mod(iterator,10)
-            coord = node_to_xyz(map,visited(visited~=0 & ~isinf(g_score)));
+        if ~mod(iterator,100)
+            coord = node_to_xyz(map,org_nodes(visited==0 & ~isinf(g_score)));
             set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
         end
         drawnow

@@ -34,16 +34,17 @@ goal_node = xyz_to_node(map,goal);
 
 %% initialize storage variables and heuristic
 % heap indices
-nodes = (1:num_nodes)';
-nodes(1) = start_node;
-nodes(start_node) = 1;
-index_list = nodes;
+node_heap = (1:num_nodes)';
+node_heap(1) = start_node;
+node_heap(start_node) = 1;
+index_list = node_heap;
+heap_len = num_nodes;
 
 % heuristic initialization
 if astar
-    heuristic = sum(bsxfun(@minus,node_to_xyz(map,nodes),goal).^2,2);
+    heuristic = sum(bsxfun(@minus,node_to_xyz(map,node_heap),goal).^2,2);
 else
-    heuristic = sparse(zeros(size(nodes)));
+    heuristic = sparse(zeros(size(node_heap)));
 end
 
 % actual cost
@@ -65,13 +66,68 @@ neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
 
+%% plotting stuff
+debug = 1;
+debug2 = 0;
+if debug
+    figure(2)
+    clf
+    h2 = plot3(start(1),start(2),start(3),'g*');
+    hold on
+    grid on
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    axis equal
+    xlim(map.boundary([1,4]))
+    ylim(map.boundary([2,5]))
+    zlim(map.boundary([3,6]))
+    h3 = plot3(goal(1),goal(2),goal(3),'r*');
+    h1 = plot3(0,0,0,'y.');
+
+    plot_path(map,path);
+    iterator = 0;
+    visited = zeros(size(node_heap));
+end
+
 %% loop until algorithm is complete
-while nodes(1) ~= goal_node
+while node_heap(1) ~= goal_node
     % obtain minimum and check exit condition
-    if f_score(nodes(1)) == Inf
+    if f_score(node_heap(1)) == Inf
         return;
     end
-    current_node = nodes(1);
+    current_node = node_heap(1);
+    visited(current_node) = current_node;
+    
+    % remove current node from heap
+    index_list(node_heap(1)) = heap_len;
+    index_list(node_heap(heap_len)) = 1;
+    node_heap(1) = node_heap(heap_len);
+    heap_len = heap_len - 1;
+    
+    % sort the heap
+    idx = 1;
+    while idx <= heap_len
+        left = idx*2;
+        right = idx*2+1;
+        smallest = idx;
+        if left <= heap_len && g_score(node_heap(left)) < g_score(node_heap(smallest))
+            smallest = left;
+        end
+        if right <= heap_len && g_score(node_heap(right)) < g_score(node_heap(smallest))
+            smallest = right;
+        end
+        if smallest ~= idx
+            temp = node_heap(idx);
+            node_heap(idx) = node_heap(smallest);
+            node_heap(smallest) = temp;
+            index_list(node_heap(idx)) = smallest;
+            index_list(node_heap(smallest)) = idx;
+            idx = smallest;
+        else
+            break;
+        end
+    end
     
     % get neighbors
     current_coord = node_to_xyz(map,current_node);
@@ -81,59 +137,43 @@ while nodes(1) ~= goal_node
     % obtain tentative distances and update distances if necessary
     if sum(c)
         neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
+        filtered_dist = neighbors_dist(c);
         for i = 1:length(neighbors_nodes)
             if g_score(current_node) + neighbors_dist(i) < g_score(neighbors_nodes(i))
-                g_score(neighbors_nodes(i)) = g_score(current_node) + neighbors_dist(i);
+                g_score(neighbors_nodes(i)) = g_score(current_node) + filtered_dist(i);
                 f_score(neighbors_nodes(i)) = g_score(neighbors_nodes(i)) + heuristic(neighbors_nodes(i));
+                previous(neighbors_nodes(i)) = current_node;
                 
                 % sort the heap
-                done = 0;
                 idx = index_list(neighbors_nodes(i));
                 while idx ~= 1
-                    level_up = floor(idx/2);
-                    if g_score(nodes(level_up)) < g_score(nodes(idx))
-                        temp = nodes(idx);
-                        nodes(idx) = nodes(level_up);
-                        nodes(level_up) = temp;
-                        index_list(neighbors_nodes(i)) = level_up;
-                        index_list(nodes(level_up)) = idx;
-                        idx = level_up;
+                    parent = floor(idx/2);
+                    if f_score(node_heap(parent)) > f_score(node_heap(idx))
+                        temp = node_heap(idx);
+                        node_heap(idx) = node_heap(parent);
+                        node_heap(parent) = temp;
+                        index_list(neighbors_nodes(i)) = parent;
+                        index_list(node_heap(parent)) = idx;
+                        idx = parent;
                     else
-                        done = 1;
+                        break;
                     end
                 end
-                previous(neighbors_nodes(i)) = current_node;
             end
         end
     end
+
+    % update heuristic costs
+    %f_score(node_heap) = g_score(node_heap) + heuristic(node_heap);
     
-    % remove current node from heap
-    index_list(nodes(heap_len)) = NaN;
-    nodes(1) = nodes(heap_len);
-    heap_len = heap_len - 1;
-    
-    % sort the heap
-    idx = 1;
-    while idx <= heap_len
-        left = idx*2;
-        right = idx*2+1;
-        smallest = idx;
-        if left <= heap_len && g_score(nodes(left)) < g_score(nodes(smallest))
-            smallest = left;
+    %% more plotting stuff
+    if debug
+        if ~mod(iterator,1000)
+            coord = node_to_xyz(map,visited(visited~=0));
+            set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
         end
-        if right <= heap_len && g_score(nodes(right)) < g_score(nodes(smallest))
-            smallest = right;
-        end
-        if smallest ~= idx
-            temp = nodes(idx);
-            nodes(idx) = nodes(smallest);
-            nodes(smallest) = temp;
-            index_list(nodes(idx)) = smallest;
-            index_list(nodes(smallest)) = idx;
-            idx = smallest;
-        else
-            break;
-        end
+        drawnow
+        iterator = iterator+1;
     end
 end
 
@@ -153,7 +193,7 @@ if cost ~= Inf
     path = node_to_xyz(map,node_path);
     path(1,:) = start;
     path(end,:) = goal;
-    num_expanded = sum(~unvisited);
+    num_expanded = num_nodes-heap_len;
 end
 plot_path(map,path);
 end

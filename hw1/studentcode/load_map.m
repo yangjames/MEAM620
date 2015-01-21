@@ -3,7 +3,7 @@ function map = load_map(filename, xy_res, z_res, margin)
 %  MAP = LOAD_MAP(filename, xy_res, z_res, margin).  Creates an occupancy grid
 %  map where a node is considered fill if it lies within 'margin' distance of
 %  on abstacle.
-%{
+
 %% parse text file for boundary and obstacles using regex
 % read in text file
 text = fileread(filename);
@@ -27,9 +27,9 @@ for i = 1:length(blocks_idx)
     blocks(:,i) = cell2mat(textscan(block_text(length('block')+1:end), '%f'));
 end
 blocks = blocks';
-%}
 
 %% parse text file for boundary and obstacles using textscan
+%{
 fid = fopen(filename);
 C = textscan(fid,'%s %f %f %f %f %f %f %f %f %f',...
     'TreatAsEmpty',{'NA','na'},'CommentStyle','#');
@@ -39,7 +39,7 @@ blocks = cell2mat(C(2:end));
 boundary_idx = find(strcmp('boundary',C{1}));
 boundary = blocks(boundary_idx,1:6);
 blocks(boundary_idx,:) = [];
-
+%}
 %% create map
 map.boundary = boundary;
 map.blocks = blocks;

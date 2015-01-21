@@ -17,6 +17,7 @@ if nargin < 4
 end
 path = zeros(0,3);
 num_expanded = 0;
+
 if isempty(map.boundary) || collide(map,start) || collide(map,goal)
     return;
 end
@@ -26,11 +27,11 @@ num_rows = floor((map.boundary(4)-map.boundary(1))/map.xy_res)+1;
 num_cols = floor((map.boundary(5)-map.boundary(2))/map.xy_res)+1;
 num_depth = floor((map.boundary(6)-map.boundary(3))/map.z_res)+1;
 num_plane = num_rows*num_cols;
-num_nodes = num_depth*num_plane;
+num_nodes = num_depth*num_plane
 
 %% define key nodes
-start_node = xyz_to_node(map,start);
-goal_node = xyz_to_node(map,goal);
+start_node = xyz_to_node(map,start)
+goal_node = xyz_to_node(map,goal)
 
 %% initialize storage variables and heuristic
 % heap indices
@@ -50,8 +51,13 @@ end
 % heap initialization
 node_heap(1) = start_node;
 node_heap(start_node) = 1;
-index_list = node_heap;
-heap_len = num_nodes;
+sorted_collisions = collisions(node_heap);
+node_heap = node_heap(sorted_collisions);
+heap_len = length(node_heap);
+index_list = NaN(num_nodes,1);
+for i = 1:heap_len
+    index_list(node_heap(i)) = i;
+end
 
 % actual cost
 g_score = Inf(num_nodes,1);
@@ -72,6 +78,25 @@ neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
 
+%% plotting stuff
+figure(2)
+visited = ~collisions;
+clf
+h2 = plot3(start(1),start(2),start(3),'g*');
+hold on
+grid on
+xlabel('x')
+ylabel('y')
+zlabel('z')
+axis equal
+xlim(map.boundary([1,4]))
+ylim(map.boundary([2,5]))
+zlim(map.boundary([3,6]))
+h3 = plot3(goal(1),goal(2),goal(3),'r*');
+h1 = plot3(0,0,0,'y.');
+
+plot_path(map,path);
+
 %% loop until algorithm is complete
 while node_heap(1) ~= goal_node
     % obtain minimum node and check exit condition
@@ -79,16 +104,17 @@ while node_heap(1) ~= goal_node
         return;
     end
     current_node = node_heap(1);
+    visited(current_node) = current_node;
     
     % remove current node from heap
     index_list(node_heap(1)) = heap_len;
-    index_list(node_heap(heap_len)) = 1;
+    index_list(node_heap(heap_len)) = NaN;
     node_heap(1) = node_heap(heap_len);
     heap_len = heap_len - 1;
     
     % sort the heap
     idx = 1;
-    while idx <= heap_len
+    while idx < heap_len
         left = idx*2;
         right = idx*2+1;
         smallest = idx;
@@ -113,14 +139,11 @@ while node_heap(1) ~= goal_node
     % get neighbors
     current_coord = node_to_xyz(map,current_node);
     neighbors_coord = bsxfun(@plus,neighbors_26,current_coord);
-    %tentative_nodes = xyz_to_node(map,neighbors_coord);
-    %c = collisions(tentative_nodes)
     c = ~collide(map,neighbors_coord);
     
     % obtain tentative distances and update distances if necessary
     if sum(c)
         neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
-        %neighbors_nodes = tentative_nodes(c);%xyz_to_node(map,neighbors_coord(collisions(,:));
         filtered_dist = neighbors_dist(c);
         for i = 1:length(neighbors_nodes)
             if g_score(current_node) + neighbors_dist(i) < g_score(neighbors_nodes(i))
@@ -146,6 +169,13 @@ while node_heap(1) ~= goal_node
             end
         end
     end
+    
+    %% more plotting stuff
+    if ~mod(num_nodes-heap_len,100)
+        coord = node_to_xyz(map,node_heap(~isinf(g_score(node_heap(1:heap_len)))));
+        set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
+    end
+    drawnow
 end
 
 %% find the path if it exists
@@ -164,7 +194,7 @@ if cost ~= Inf
     path = node_to_xyz(map,node_path);
     path(1,:) = start;
     path(end,:) = goal;
-    num_expanded = num_nodes-heap_len;
 end
-%plot_path(map,path);
+num_expanded = num_nodes-heap_len;
+plot_path(map,path);
 end

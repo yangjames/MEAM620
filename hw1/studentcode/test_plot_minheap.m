@@ -1,6 +1,6 @@
-function test_plot_minheap(Q,len)
+function test_plot_minheap(Q)
 
-num_nodes = len;
+num_nodes = length(Q);
 
 figure(9)
 clf
@@ -15,3 +15,4 @@ end
 hold off
 
 set(gca,'xlim',[-1,1],'ylim',[-1,floor(log2(ii))+1],'ydir','reverse')
+    drawnow

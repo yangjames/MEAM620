@@ -65,7 +65,7 @@ neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
 %}
-%{
+
 %% plotting stuff
 figure(2)
 iterator = 1;
@@ -84,7 +84,7 @@ h3 = plot3(goal(1),goal(2),goal(3),'r*');
 h1 = plot3(0,0,0,'y.');
 
 plot_path(map,path);
-%}
+
 %% loop until algorithm is complete
 while unvisited_full(goal_node)
     % get unvisited node with smallest distance
@@ -113,7 +113,7 @@ while unvisited_full(goal_node)
     % remove current node from graph
     unvisited(current_node,1) = false;
     unvisited_full(current_node) = false;
-    %{
+    
     %% more plotting stuff
     if ~mod(iterator,100)
         coord = node_to_xyz(map,nodes(~isinf(g_score) & unvisited));
@@ -121,7 +121,7 @@ while unvisited_full(goal_node)
     end
     iterator = iterator+1;
     drawnow
-    %}
+    
 end
 
 %% find the path if it exists

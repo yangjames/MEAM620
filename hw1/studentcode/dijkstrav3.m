@@ -1,4 +1,4 @@
-function [path, num_explored]=dijkstrav3(map,start,goal,astar)
+function [path, num_expanded]=dijkstra(map,start,goal,astar)
 if nargin < 4
     astar = false;
 end
@@ -47,6 +47,7 @@ f_cost = Inf(num_nodes,1);
 f_cost(start_node) = heuristic(start_node);
 
 %% initialize 26-connected neighbors coordinates and distances
+
 neighbors_6 = [0 0 -map.z_res;...
                 0 -map.xy_res 0;...
                 -map.xy_res 0 0;...
@@ -54,6 +55,7 @@ neighbors_6 = [0 0 -map.z_res;...
                 0 map.xy_res 0;...
                 0 0 map.z_res];
 neighbors_dist = sqrt(sum(neighbors_6.^2,2));
+
 %{
 neighbors_26 = [repmat([-map.xy_res; 0; map.xy_res],9,1)...
     repmat([repmat(-map.xy_res,3,1); zeros(3,1); repmat(map.xy_res,3,1)],3,1)...
@@ -62,7 +64,7 @@ neighbors_dist = sqrt(sum(neighbors_26.^2,2));
 neighbors_26(14,:) = [];
 neighbors_dist(14) = [];
 %}
-
+%{
 %% plotting stuff
 figure(2)
 clf
@@ -80,7 +82,7 @@ h3 = plot3(goal(1),goal(2),goal(3),'r*');
 h1 = plot3(0,0,0,'y.');
 
 plot_path(map,path);
-
+%}
 %% loop until completion
 while node_heap(1) ~= goal_node
     % get min
@@ -88,7 +90,7 @@ while node_heap(1) ~= goal_node
         return;
     end
     current_node = node_heap(1);
-    visited(current_node) = true;
+    %visited(current_node) = true;
     
     % remove current node from heap
     node_heap_idx(node_heap(1)) = node_heap_len;
@@ -125,14 +127,14 @@ while node_heap(1) ~= goal_node
     neighbors_coord = bsxfun(@plus,neighbors_6,current_coord);
     c = ~collide(map,neighbors_coord);
     
-    if sum(c)
-        neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
-        filtered_dist = neighbors_dist(c);
-        for i = 1:sum(c)
+    neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
+    filtered_dist = neighbors_dist(c);
+    for i = 1:length(neighbors_nodes)
+        if cost(current_node) + filtered_dist(i) < cost(neighbors_nodes(i))
             cost(neighbors_nodes(i)) = cost(current_node) + filtered_dist(i);
             f_cost(neighbors_nodes(i)) = cost(neighbors_nodes(i)) + heuristic(neighbors_nodes(i));
             previous(neighbors_nodes(i)) = current_node;
-            
+
             idx = node_heap_idx(neighbors_nodes(i));
             while idx ~= 1
                 parent = floor(idx/2);
@@ -150,13 +152,14 @@ while node_heap(1) ~= goal_node
         end
     end
     
+    %{
     %% more plotting stuff
-    if ~mod(num_nodes-node_heap_len,500)
+    if ~mod(num_nodes-node_heap_len,100)
         coord = node_to_xyz(map,node_heap(~isinf(cost(node_heap(1:node_heap_len)))));
         set(h1,'XData',coord(:,1),'YData',coord(:,2),'ZData',coord(:,3));
     end
     drawnow
-    
+    %}
 end
 
 %% find the path if it exists

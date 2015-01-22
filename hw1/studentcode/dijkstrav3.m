@@ -1,4 +1,4 @@
-function [path, num_expanded]=dijkstra(map,start,goal,astar)
+function [path, num_expanded]=dijkstrav3(map,start,goal,astar)
 if nargin < 4
     astar = false;
 end
@@ -19,13 +19,15 @@ num_nodes = num_depth*num_plane;
 %% define key nodes
 start_node = xyz_to_node(map,start);
 goal_node = xyz_to_node(map,goal);
+min_bound = node_to_xyz(map,1);
+max_bound = node_to_xyz(map,num_nodes);
 
 %% initialize storage variables and heuristic
 previous = NaN(num_nodes,1);
-visited = false(num_nodes,1);
 
 % heap indices
 node_heap = (1:num_nodes)';
+collisions = collide(map,node_to_xyz(map,node_heap));
 
 % minimize the heap
 node_heap(1) = start_node;
@@ -125,12 +127,14 @@ while node_heap(1) ~= goal_node
     % obtain neighbors
     current_coord = node_to_xyz(map,current_node);
     neighbors_coord = bsxfun(@plus,neighbors_6,current_coord);
-    c = ~collide(map,neighbors_coord);
+    c = ~any(bsxfun(@gt, min_bound, neighbors_coord) | bsxfun(@lt, max_bound, neighbors_coord),2);
+
+    %c = ~collide(map,neighbors_coord);
     
     neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
     filtered_dist = neighbors_dist(c);
     for i = 1:length(neighbors_nodes)
-        if cost(current_node) + filtered_dist(i) < cost(neighbors_nodes(i))
+        if cost(current_node) + filtered_dist(i) < cost(neighbors_nodes(i)) && ~collisions(neighbors_nodes(i))
             cost(neighbors_nodes(i)) = cost(current_node) + filtered_dist(i);
             f_cost(neighbors_nodes(i)) = cost(neighbors_nodes(i)) + heuristic(neighbors_nodes(i));
             previous(neighbors_nodes(i)) = current_node;
@@ -180,5 +184,5 @@ if goal_cost ~= Inf
     path(end,:) = goal;
 end
 num_expanded = num_nodes-node_heap_len;
-%plot_path(map,path);
+plot_path(map,path);
 end

@@ -126,32 +126,31 @@ while node_heap(1) ~= goal_node
     neighbors_coord = bsxfun(@plus,neighbors_6,current_coord);
     c = ~collide(map,neighbors_coord);
     
-    %if sum(c)
-        neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
-        filtered_dist = neighbors_dist(c);
-        for i = 1:length(neighbors_nodes)
-            if cost(current_node) + filtered_dist(i) < cost(neighbors_nodes(i))
-                cost(neighbors_nodes(i)) = cost(current_node) + filtered_dist(i);
-                f_cost(neighbors_nodes(i)) = cost(neighbors_nodes(i)) + heuristic(neighbors_nodes(i));
-                previous(neighbors_nodes(i)) = current_node;
+    neighbors_nodes = xyz_to_node(map,neighbors_coord(c,:));
+    filtered_dist = neighbors_dist(c);
+    for i = 1:length(neighbors_nodes)
+        if cost(current_node) + filtered_dist(i) < cost(neighbors_nodes(i))
+            cost(neighbors_nodes(i)) = cost(current_node) + filtered_dist(i);
+            f_cost(neighbors_nodes(i)) = cost(neighbors_nodes(i)) + heuristic(neighbors_nodes(i));
+            previous(neighbors_nodes(i)) = current_node;
 
-                idx = node_heap_idx(neighbors_nodes(i));
-                while idx ~= 1
-                    parent = floor(idx/2);
-                    if f_cost(node_heap(parent)) > f_cost(node_heap(idx))
-                        node_heap_idx(neighbors_nodes(i)) = parent;
-                        node_heap_idx(node_heap(parent)) = idx;
-                        temp = node_heap(idx);
-                        node_heap(idx) = node_heap(parent);
-                        node_heap(parent) = temp;
-                        idx = parent;
-                    else
-                        break;
-                    end
+            idx = node_heap_idx(neighbors_nodes(i));
+            while idx ~= 1
+                parent = floor(idx/2);
+                if f_cost(node_heap(parent)) > f_cost(node_heap(idx))
+                    node_heap_idx(neighbors_nodes(i)) = parent;
+                    node_heap_idx(node_heap(parent)) = idx;
+                    temp = node_heap(idx);
+                    node_heap(idx) = node_heap(parent);
+                    node_heap(parent) = temp;
+                    idx = parent;
+                else
+                    break;
                 end
             end
         end
-    %end
+    end
+    
     %{
     %% more plotting stuff
     if ~mod(num_nodes-node_heap_len,100)

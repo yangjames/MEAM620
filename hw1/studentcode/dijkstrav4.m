@@ -89,7 +89,6 @@ while node_heap(1) ~= goal_node
         return;
     end
     current_node = node_heap(1);
-    %visited(current_node) = true;
     
     % remove current node from heap
     node_heap_idx(node_heap(1)) = node_heap_len;

@@ -3,10 +3,18 @@ function [desired_state] = circle(t, qn)
 
 % =================== Your code goes here ===================
 % You have to set the pos, vel, acc, yaw and yawdot variables
+r = 5;
+w = 1/2;
 
-pos = [0; 0; 0];
-vel = [0; 0; 0];
-acc = [0; 0; 0];
+if w*t <= 2*pi
+    pos = [r*cos(w*t); r*sin(w*t); (w*t)*2.5/(2*pi)];
+    vel = [-r*w*sin(w*t); r*w*cos(w*t); w*2.5/(2*pi)];
+    acc = [-r*w^2*cos(w*t); -r*w^2*sin(w*t); 0];
+else
+    pos = [0 0 2.5]';
+    vel = [0 0 0]';
+    acc = [0 0 0]';
+end
 yaw = 0;
 yawdot = 0;
 

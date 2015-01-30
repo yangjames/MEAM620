@@ -3,7 +3,7 @@ function [desired_state] = diamond(t, qn)
 
 % =================== Your code goes here ===================
 % You have to set the pos, vel, acc, yaw and yawdot variables
-duration = 3;
+duration = 2;
 
 if t < duration
     pos = [1/(4*duration)*t;...

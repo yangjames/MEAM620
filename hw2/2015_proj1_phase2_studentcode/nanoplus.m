@@ -19,7 +19,7 @@ params.arm_length = 0.086;
 % Iyy = I(2,2);
 % Izz = I(3,3);
 
-params.maxangle = 50*pi/180; %you can specify the maximum commanded angle here
+params.maxangle = 80*pi/180; %you can specify the maximum commanded angle here
 params.maxF = 2.5*m*g;
 params.minF = 0.05*m*g;
 
@@ -55,14 +55,14 @@ params.Kp_m_y = 2; params.Kd_m_y = 0.5;
 %}
 
 % orientation gains
-params.Kp_o = 1.8; params.Kd_o = 0.5; params.Ki_o = 0.00000;
+params.Kp_o = 5; params.Kd_o = 2.5; params.Ki_o = 0.0;
 
 % thrust gains
-params.Kp_t = 1.5; params.Kd_t = 0.5; params.Ki_t = 0.0;
+params.Kp_t = 5.5; params.Kd_t = 0.7; params.Ki_t = 0.0;
 
 % moment gains
 %params.Kp_m = 20; params.Kd_m = 0.5;
-params.Kp_m = 15; params.Kd_m = 0.15;
+params.Kp_m = 20; params.Kd_m = 0.15;
 
-params.Kp_m_y = 2; params.Kd_m_y = 0.1;
+params.Kp_m_y = 4; params.Kd_m_y = 0.5;
 end

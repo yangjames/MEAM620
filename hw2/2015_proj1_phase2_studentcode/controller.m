@@ -21,14 +21,13 @@ int_thresh = 100;
 err_c(err_c>int_thresh) = int_thresh;
 
 % Desired roll, pitch and yaw
-%{
-a_dir = euler_to_rot(0,0,qd{qn}.euler(3))*(err/norm(err)+[0 0 params.grav]');
-
-phi_des = 
-theta_des = 
+%{d
+a = qd{qn}.acc_des+[0 0 params.grav]' + params.Kp_o*err + params.Kd_o*err_d;
+theta_des = atan2(a(1),a(3));
+phi_des = -atan2(a(2),a(3));
 psi_des = 0;
 %}
-%{d
+%{
 phi_des = -(err(2)*params.Kp_o + err_d(2)*params.Kd_o + err_c(2)*params.Ki_o);
     %+(qd{qn}.acc_des(1)*cos(qd{qn}.euler(3)) + qd{qn}.acc_des(2)*sin(qd{qn}.euler(3)))/params.grav;
 theta_des = err(1)*params.Kp_o + err_d(1)*params.Kd_o + err_c(1)*params.Ki_o;
@@ -36,6 +35,7 @@ theta_des = err(1)*params.Kp_o + err_d(1)*params.Kd_o + err_c(1)*params.Ki_o;
 %theta_des = -(qd{qn}.acc_des(1)*sin(qd{qn}.euler(3)) - qd{qn}.acc_des(2)*cos(qd{qn}.euler(3)))/params.grav;
 %phi_des = (qd{qn}.acc_des(1)*cos(qd{qn}.euler(3)) + qd{qn}.acc_des(2)*sin(qd{qn}.euler(3)))/params.grav;
 psi_des = 0;
+%}
 
 if phi_des > params.maxangle
     phi_des = params.maxangle;
@@ -48,20 +48,20 @@ elseif theta_des < -params.maxangle
     theta_des = -params.maxangle;
 end
 
+
 euler_des = [phi_des; theta_des; psi_des];
 actual_angles = [actual_angles qd{qn}.euler];
 desired_angles = [desired_angles euler_des];
-%}
+
 % Thrust
 F    = err(3)*params.Kp_t + err_d(3)*params.Kd_t + err_d(3)*params.Ki_t...
     + params.mass*(params.grav/(cos(phi_des)*cos(theta_des))+qd{qn}.acc_des(3));
 
 % Moment
-R = euler_to_rot(qd{qn}.euler(1),qd{qn}.euler(2),qd{qn}.euler(3));
 err_r = euler_des - qd{qn}.euler;
 err_r_d = -qd{qn}.omega;
 M = params.Kp_m*err_r + params.Kd_m*err_r_d;
-M(3) = params.Kp_m_y*err_r(3) + params.Kd_m_y*err_r_d(3);
+%M(3) = params.Kp_m_y*err_r(3) + params.Kd_m_y*err_r_d(3);
 C = cross(qd{qn}.omega,params.I*qd{qn}.omega);
 M= M-C;
 %M    = zeros(3,1);

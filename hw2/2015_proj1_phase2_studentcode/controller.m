@@ -1,5 +1,6 @@
 function [F, M, trpy, drpy] = controller(qd, t, qn, params)
-persistent err_c Kp_o Kd_o Ki_o Kp_t Kd_t Ki_t Kp_m Kd_m Kp_m_y Kd_m_y
+persistent err_c
+global desired_angles actual_angles
 % CONTROLLER quadrotor controller
 % The current states are:
 % qd{qn}.pos, qd{qn}.vel, qd{qn}.euler = [roll;pitch;yaw], qd{qn}.omega
@@ -10,62 +11,59 @@ persistent err_c Kp_o Kd_o Ki_o Kp_t Kd_t Ki_t Kp_m Kd_m Kp_m_y Kd_m_y
 % =================== Your code goes here ===================
 if isempty(err_c)
     err_c = [0;0;0];
-    % orientation gains
-    Kp_o = 1.5; Kd_o = 1; Ki_o = 0.00015;
-    
-    % thrust gains
-    Kp_t = 2; Kd_t = 2; Ki_t = 0.000;
-    
-    % moment gains
-    Kp_m = 4; Kd_m = 0.5;
-    
-    Kp_m_y = 0.1; Kd_m_y = 0;
 end
-%{
-%% planar
-qd{qn}.pos_des(3) = 0;
-qd{qn}.vel_des(3) = 0;
-%}
-%{
-%% altitude
-qd{qn}.pos_des(1) = 0;
-qd{qn}.pos_des(2) = 0;
-qd{qn}.vel_des(1) = 0;
-qd{qn}.vel_des(2) = 0;
-%}
+
 err = qd{qn}.pos_des - qd{qn}.pos;
 err_d = qd{qn}.vel_des - qd{qn}.vel;
 err_c = err_c + err;
 
-int_thresh = 1000;
+int_thresh = 100;
 err_c(err_c>int_thresh) = int_thresh;
 
 % Desired roll, pitch and yaw
-phi_des = -(err(2)*Kp_o + err_d(2)*Kd_o + err_c(2)*Ki_o);
-theta_des = err(1)*Kp_o + err_d(1)*Kd_o + err_c(1)*Ki_o;
+%{
+a_dir = euler_to_rot(0,0,qd{qn}.euler(3))*(err/norm(err)+[0 0 params.grav]');
+
+phi_des = 
+theta_des = 
 psi_des = 0;
-max_angle = pi/3;
-if phi_des > max_angle
-    phi_des = max_angle;
-elseif phi_des < -max_angle
-    phi_des = -max_angle;
+%}
+%{d
+phi_des = -(err(2)*params.Kp_o + err_d(2)*params.Kd_o + err_c(2)*params.Ki_o);
+    %+(qd{qn}.acc_des(1)*cos(qd{qn}.euler(3)) + qd{qn}.acc_des(2)*sin(qd{qn}.euler(3)))/params.grav;
+theta_des = err(1)*params.Kp_o + err_d(1)*params.Kd_o + err_c(1)*params.Ki_o;
+     %-(qd{qn}.acc_des(1)*sin(qd{qn}.euler(3))-qd{qn}.acc_des(2)*cos(qd{qn}.euler(3)))/params.grav;
+%theta_des = -(qd{qn}.acc_des(1)*sin(qd{qn}.euler(3)) - qd{qn}.acc_des(2)*cos(qd{qn}.euler(3)))/params.grav;
+%phi_des = (qd{qn}.acc_des(1)*cos(qd{qn}.euler(3)) + qd{qn}.acc_des(2)*sin(qd{qn}.euler(3)))/params.grav;
+psi_des = 0;
+
+if phi_des > params.maxangle
+    phi_des = params.maxangle;
+elseif phi_des < -params.maxangle
+    phi_des = -params.maxangle;
 end
-if theta_des > max_angle
-    theta_des = max_angle;
-elseif theta_des < -max_angle
-    theta_des = -max_angle;
+if theta_des > params.maxangle
+    theta_des = params.maxangle;
+elseif theta_des < -params.maxangle
+    theta_des = -params.maxangle;
 end
 
 euler_des = [phi_des; theta_des; psi_des];
-
+actual_angles = [actual_angles qd{qn}.euler];
+desired_angles = [desired_angles euler_des];
+%}
 % Thrust
-F    = err(3)*Kp_t + err_d(3)*Kd_t + err_d(3)*Ki_t + params.mass*params.grav/(cos(phi_des)*cos(theta_des));
+F    = err(3)*params.Kp_t + err_d(3)*params.Kd_t + err_d(3)*params.Ki_t...
+    + params.mass*(params.grav/(cos(phi_des)*cos(theta_des))+qd{qn}.acc_des(3));
 
 % Moment
 R = euler_to_rot(qd{qn}.euler(1),qd{qn}.euler(2),qd{qn}.euler(3));
 err_r = euler_des - qd{qn}.euler;
-err_r_d = -R*qd{qn}.omega;
-M = Kp_m*err_r + Kd_m*err_r_d;
+err_r_d = -qd{qn}.omega;
+M = params.Kp_m*err_r + params.Kd_m*err_r_d;
+M(3) = params.Kp_m_y*err_r(3) + params.Kd_m_y*err_r_d(3);
+C = cross(qd{qn}.omega,params.I*qd{qn}.omega);
+M= M-C;
 %M    = zeros(3,1);
 
 % You should fill this in

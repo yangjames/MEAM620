@@ -4,7 +4,7 @@ function [desired_state] = circle(t, qn)
 % =================== Your code goes here ===================
 % You have to set the pos, vel, acc, yaw and yawdot variables
 r = 5;
-w = 1;
+w = 0.9;
 
 if w*t <= 2*pi
     pos = [r*cos(w*t); r*sin(w*t); (w*t)*2.5/(2*pi)];

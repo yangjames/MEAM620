@@ -8,11 +8,11 @@ close all
 clear all
 addpath('utils')
 addpath('trajectories')
-
+global desired_angles actual_angles
 % You need to implement trajhandle and controlhandle
 
 % trajectory generator
-trajhandle = @circle;
+trajhandle = @diamond;
 
 % controller
 controlhandle = @controller;
@@ -141,3 +141,30 @@ if(~isempty(err))
 end
 
 fprintf('finished.\n')
+
+%{d
+figure(10)
+plot(desired_angles(1,:),'r--')
+hold on
+plot(actual_angles(1,:),'b--')
+grid on
+xlabel('time')
+ylabel('roll')
+
+legend('desired','actual')
+figure(11)
+plot(desired_angles(2,:),'r--')
+hold on
+plot(actual_angles(2,:),'b--')
+grid on
+ylabel('pitch')
+legend('desired','actual')
+
+figure(12)
+plot(desired_angles(3,:),'r--')
+hold on
+plot(actual_angles(3,:),'b--')
+grid on
+ylabel('yaw')
+legend('desired','actual')
+%}

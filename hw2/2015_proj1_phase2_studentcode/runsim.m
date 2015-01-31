@@ -12,7 +12,7 @@ global desired_angles actual_angles
 % You need to implement trajhandle and controlhandle
 
 % trajectory generator
-trajhandle = @circle;
+trajhandle = @diamond;
 
 % controller
 controlhandle = @controller;

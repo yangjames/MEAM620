@@ -4,7 +4,7 @@ function [desired_state] = circle(t, qn)
 % =================== Your code goes here ===================
 % You have to set the pos, vel, acc, yaw and yawdot variables
 r = 5;
-t_final = 5.7;
+t_final = 11;
 a = get_interp_weights([0;0;0;2*pi;0;0],t_final);
 X = [1 t t^2 t^3 t^4 t^5;...
         0 1 2*t 3*t^2 4*t^3 5*t^4;...

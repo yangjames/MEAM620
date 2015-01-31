@@ -28,10 +28,12 @@ params.minF = 0.05*m*g;
 % params.k = 0, and they will be passed into controller.m
 
 % orientation gains
-params.Kp_o = 60; params.Kd_o = 3.4; params.Ki_o = 0.0;
+%params.Kp_o = 60; params.Kd_o = 3.4; params.Ki_o = 0.0;
+params.Kp_o = 7; params.Kd_o = 1; params.Ki_o = 0.0;
 
 % thrust gains
-params.Kp_t = 125; params.Kd_t = 1.25; params.Ki_t = 0.0;
+%params.Kp_t = 125; params.Kd_t = 1.25; params.Ki_t = 0.0;
+params.Kp_t = 7; params.Kd_t = 0.5; params.Ki_t = 0.0;
 
 % moment gains
 %params.Kp_m = 20; params.Kd_m = 0.5;

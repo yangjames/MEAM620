@@ -1,4 +1,5 @@
 function [ desired_state ] = trajectory_generator(t, qn, map, path)
+persistent path0 map0
 % TRAJECTORY_GENERATOR: Turn a Dijkstra or A* path into a trajectory
 %
 % NOTE: This function would be called with variable number of input
@@ -21,3 +22,15 @@ function [ desired_state ] = trajectory_generator(t, qn, map, path)
 % map0 = map;
 % path0 = path;
 
+if isempty(path0)
+    path0 = path;
+    map0 = map;
+end
+
+
+
+desired_state.pos = pos(:);
+desired_state.vel = vel(:);
+desired_state.acc = acc(:);
+desired_state.yaw = yaw;
+desired_state.yawdot = yawdot;

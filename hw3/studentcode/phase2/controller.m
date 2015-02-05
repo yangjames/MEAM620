@@ -21,7 +21,7 @@ int_thresh = 100;
 err_c(err_c>int_thresh) = int_thresh;
 
 % Desired roll, pitch and yaw
-a = qd{qn}.acc_des+[0 0 params.grav]' + params.Kp_o*err + params.Kd_o*err_d;
+a = qd{qn}.acc_des+[0 0 params.grav]' + params.Kp_o*(err-[0;0;err(3)]) + params.Kd_o*(err_d-[0;0;err_d(3)]);
 theta_des = atan2(a(1),a(3));
 phi_des = -atan2(a(2),a(3));
 psi_des = 0;

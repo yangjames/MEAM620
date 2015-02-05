@@ -12,9 +12,9 @@ xlabel('x')
 ylabel('y')
 zlabel('z')
 axis equal
-xlim(map.boundary([1,4]))
-ylim(map.boundary([2,5]))
-zlim(map.boundary([3,6]))
+%xlim(map.boundary([1,4]))
+%ylim(map.boundary([2,5]))
+%zlim(map.boundary([3,6]))
 grid on
 for i = 2:size(map.blocks,1)+1
     [x,y,z] = get_rect_vals(map.blocks(i-1,:));

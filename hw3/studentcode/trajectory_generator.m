@@ -1,5 +1,5 @@
 function [ desired_state ] = trajectory_generator(t, qn, map, path)
-persistent path0 map0
+persistent path0 c_time dt_stamps t_idx t_total pivot_idx
 % TRAJECTORY_GENERATOR: Turn a Dijkstra or A* path into a trajectory
 %
 % NOTE: This function would be called with variable number of input
@@ -23,11 +23,50 @@ persistent path0 map0
 % path0 = path;
 
 if isempty(path0)
-    path0 = path;
-    map0 = map;
+    path0 = path{1};
+    max_jerk = 1;
+    
+    % find indices where path switches directions
+    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
+    
+    % calculate distance between pivot points
+    distances = sqrt(sum((path0([1; pivot_idx],:)-path0([pivot_idx;size(path0,1)],:)).^2,2))
+    
+    % gather time stamps between pivot points
+    dt_stamps = (6*distances/max_jerk).^(1/3)
+    
+    c_time = dt_stamps(1);
+    t_idx = 1;
+    t_total = sum(dt_stamps);
 end
 
+if t < t_total-sum(dt_stamps(end-1:end))
+    if t > c_time
+        t_idx = t_idx+1;
+        c_time = c_time + dt_stamps(t_idx);
+    end
+    dt = t-sum(dt_stamps(1:t_idx-1));
+    X_0 = [path0(pivot_idx(t_idx),:);...
+        0 0 0;...
+        0 0 0;...
+        path0(pivot_idx(t_idx+1),:);...
+        0 0 0;...
+        0 0 0];
+    a = get_interp_weights(X_0,dt_stamps(t_idx));
+    X = [1 dt dt^2 dt^3 dt^4 dt^5;...
+        0 1 2*dt 3*dt^2 4*dt^3 5*dt^4;...
+        0 0 2 6*dt 12*dt^2 20*dt^3]*a;
+    pos = X(1,:)';
+    vel = X(2,:)';
+    acc = X(3,:)';
+else
+    pos = path0(end,:)';
+    vel = [0 0 0]';
+    acc = [0 0 0]';
+end
 
+yaw = 0;
+yawdot = 0;
 
 desired_state.pos = pos(:);
 desired_state.vel = vel(:);

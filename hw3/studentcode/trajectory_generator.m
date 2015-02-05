@@ -24,23 +24,23 @@ persistent path0 c_time dt_stamps t_idx t_total pivot_idx
 
 if isempty(path0)
     path0 = path{1};
-    max_jerk = 1;
+    max_snap = 17;
     
     % find indices where path switches directions
-    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
+    pivot_idx = [find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;size(path0,1)];
     
     % calculate distance between pivot points
-    distances = sqrt(sum((path0([1; pivot_idx],:)-path0([pivot_idx;size(path0,1)],:)).^2,2))
+    distances = sqrt(sum((path0([1; pivot_idx],:)-path0([pivot_idx;size(path0,1)],:)).^2,2));
     
     % gather time stamps between pivot points
-    dt_stamps = (6*distances/max_jerk).^(1/3)
+    dt_stamps = (24*distances/max_snap).^(1/4);
     
     c_time = dt_stamps(1);
     t_idx = 1;
     t_total = sum(dt_stamps);
 end
 
-if t < t_total-sum(dt_stamps(end-1:end))
+if t < t_total-dt_stamps(end)
     if t > c_time
         t_idx = t_idx+1;
         c_time = c_time + dt_stamps(t_idx);

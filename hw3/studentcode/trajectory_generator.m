@@ -69,7 +69,7 @@ end
 %}
 if isempty(C)
     path0 = path{1};
-    max_der = 50;
+    max_der = 80;
     n_der = 4;
 
     % find indices where path switches directions
@@ -108,7 +108,7 @@ if isempty(C)
     t_idx = 1;
 end
 
-if t < dt_stamps(end)
+if t < dt_stamps(end-1)
     if t >= dt_stamps(t_idx)
         t_idx = t_idx+1;
     end

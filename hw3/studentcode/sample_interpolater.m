@@ -1,20 +1,86 @@
 clear all
-load sample_path.mat
-
+%load sample_path.mat
+path0 = [0 0 0; 1 1 1; 0 1 0; 0 2 0];%[rand(3,3)*5];
 %{d
-max_speed = 2;
-c_t = 0;
-t_idx = 1;
+% gather time stamps between pivot points
+max_der = 0.5;
+n_der = 3;
 
 % find indices where path switches directions
 pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
 
+truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
+
 % calculate distance between pivot points
-distances = sqrt(sum((path0([1; pivot_idx],:)-path0([pivot_idx;size(path0,1)],:)).^2,2));
+distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
 
 % gather time stamps between pivot points
-t = distances/max_speed;
+dt_stamps = [0;(factorial(n_der)*distances/max_der).^(1/n_der)];
+for i = 1:length(dt_stamps)
+    dt_stamps(i) = sum(dt_stamps(1:i));
+end
+A = zeros(length(distances)*4);
+X = zeros(length(distances)*4,3);
 
+% add position constraints
+for i = 1:length(distances)
+    A((i-1)*2+1:(i-1)*2+2,(i-1)*4+1:(i-1)*4+4) = [1 dt_stamps(i) dt_stamps(i)^2 dt_stamps(i)^3;...
+                            1 dt_stamps(i+1) dt_stamps(i+1)^2 dt_stamps(i+1)^3];
+    X((i-1)*2+1:(i-1)*2+2,:) = [truncated_path(i,:);truncated_path(i+1,:)];
+end
+
+% add end point velocity constraints
+A(length(distances)*2+1,1:4) = [0 1 dt_stamps(1) dt_stamps(1)^2];
+A(length(distances)*2+2,end-3:end) = [0 1 dt_stamps(end) dt_stamps(end)^2];
+
+% add velocity and acceleration constraints
+for i = 1:length(distances)-1
+    A(length(distances)*2+2+i,(i-1)*4+1:(i-1)*4+8)=...
+        [0 1 2*dt_stamps(i+1) 3*dt_stamps(i+1)^2 0 -1 -2*dt_stamps(i+1) -3*dt_stamps(i+1)^2];
+    A(length(distances)*2+2+i+length(distances)-1,(i-1)*4+1:(i-1)*4+8) = ...
+        [0 0 2 6*dt_stamps(i+1) 0 0 -2 -6*dt_stamps(i+1)];
+end
+C=A\X
+
+time = 0:0.01:dt_stamps(end)+5;
+pos = [];
+figure(7)
+clf
+plot3(path0(:,1),path0(:,2),path0(:,3),'b-')
+grid on
+axis equal
+xlabel('x')
+ylabel('y')
+zlabel('z')
+for i = 1:length(time)
+    t = time(i);
+    if t < dt_stamps(end)
+        if t >= dt_stamps(t_idx)
+            t_idx = t_idx+1;
+        end
+        dt = t;%-sum(dt_stamps(1:t_idx-1));
+        S = [1 dt dt^2 dt^3;...
+            0 1 2*dt 3*dt^2;...
+            0 0 2 6*dt]*...
+            C((t_idx-2)*4+1:(t_idx-2)*4+4,:);
+        pos = [pos S(1,:)'];
+        vel = S(2,:)';
+        acc = S(3,:)';
+    else
+        pos = [pos path0(end,:)'];
+        vel = [0 0 0]';
+        acc = [0 0 0]';
+    end
+    figure(6)
+    clf
+    plot3(pos(1,:), pos(2,:), pos(3,:),'r-')
+    axis equal
+    grid on
+    xlabel('x')
+    ylabel('y')
+    zlabel('z')
+    drawnow
+end
 
 %}
 

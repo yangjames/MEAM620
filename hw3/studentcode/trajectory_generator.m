@@ -1,5 +1,5 @@
 function [ desired_state ] = trajectory_generator(t, qn, map, path)
-persistent path0 c_time dt_stamps t_idx t_total pivot_idx C
+persistent path0 c_time dt_stamps t_idx t_total pivot_idx C path1
 % TRAJECTORY_GENERATOR: Turn a Dijkstra or A* path into a trajectory
 %
 % NOTE: This function would be called with variable number of input
@@ -24,18 +24,26 @@ persistent path0 c_time dt_stamps t_idx t_total pivot_idx C
 
 %{
 if isempty(path0)
-    path0 = path{1};
-    max_der = 17;
+    path1 = path{1};
+    max_der = 1;
     n_der = 4;
     
-    % find indices where path switches directions
-    pivot_idx = [find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;size(path0,1)];
+    % filter the path
+    window_size = 5;
+    path0 = path1;%[conv2(path1,ones(window_size,1)/window_size,'valid'); path1(end,:)];
+    %path0 = [path1(1,:); path1(end,:)];
     
+    % find indices where path switches directions
+    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
+
+    truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
+
     % calculate distance between pivot points
-    distances = sqrt(sum((path0([1; pivot_idx],:)-path0([pivot_idx;size(path0,1)],:)).^2,2));
+    distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
     
     % gather time stamps between pivot points
-    dt_stamps = (factorial(n_der)*distances/max_der).^(1/n_der);
+    dt_stamps = (distances).^(1/3)*1.5;
+    disp([distances dt_stamps])
     
     c_time = dt_stamps(1);
     t_idx = 1;
@@ -67,11 +75,14 @@ else
     acc = [0 0 0]';
 end
 %}
+%{d
 if isempty(C)
-    path0 = path{1};
-    max_der = 80;
-    n_der = 4;
+    path1 = path{1};
 
+    % filter the path
+    window_size = 5;
+    path0 = path1;%[conv2(path1,ones(window_size,1)/window_size,'valid'); path1(end,:)];
+    
     % find indices where path switches directions
     pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
 
@@ -81,7 +92,7 @@ if isempty(C)
     distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
 
     % gather time stamps between pivot points
-    dt_stamps = cumsum([0;(factorial(n_der)*distances/max_der).^(1/n_der)]);
+    dt_stamps = cumsum([0;sqrt(distances)*0.7]);
     
     A = zeros(length(distances)*4);
     X = zeros(length(distances)*4,3);
@@ -124,8 +135,22 @@ else
     vel = [0 0 0]';
     acc = [0 0 0]';
 end
-    
+%}
+%pos = path1(1,:)';
+%vel = [0 0 0]';
+%acc = [0 0 0]';
 
+%{
+if t < 7
+    pos = path1(1,:)';
+    vel = [0 0 0]';
+    acc = [0 0 0]';
+else
+    pos = path1(1,:)'+[5 5 5]';
+    vel = [0 0 0]';
+    acc = [0 0 0]';
+end
+%}
 yaw = 0;
 yawdot = 0;
 

@@ -1,13 +1,15 @@
 clear all
-%load sample_path.mat
-path0 = [0 0 0; 1 1 1; 0 1 0; 0 2 0];%[rand(3,3)*5];
+load sample_path.mat
+%path0 = [0 0 0; 1 1 1; 0 1 0; 0 2 0];%[rand(3,3)*5];
 %{d
 % gather time stamps between pivot points
-max_der = 0.5;
+max_der = 80;
 n_der = 3;
 
 % find indices where path switches directions
-pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
+window_size = 10;
+filtered_path = conv2(path0,ones(window_size,1)/window_size,'valid');
+pivot_idx = find(sqrt(sum(diff(diff(filtered_path)).^2,2))>100*eps)+1;
 
 truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
 
@@ -15,10 +17,8 @@ truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
 distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
 
 % gather time stamps between pivot points
-dt_stamps = [0;(factorial(n_der)*distances/max_der).^(1/n_der)];
-for i = 1:length(dt_stamps)
-    dt_stamps(i) = sum(dt_stamps(1:i));
-end
+dt_stamps = cumsum([0;(factorial(n_der)*distances/max_der).^(1/n_der)]);
+
 A = zeros(length(distances)*4);
 X = zeros(length(distances)*4,3);
 
@@ -40,7 +40,7 @@ for i = 1:length(distances)-1
     A(length(distances)*2+2+i+length(distances)-1,(i-1)*4+1:(i-1)*4+8) = ...
         [0 0 2 6*dt_stamps(i+1) 0 0 -2 -6*dt_stamps(i+1)];
 end
-C=A\X
+C=A\X;
 
 time = 0:0.01:dt_stamps(end)+5;
 pos = [];
@@ -52,6 +52,7 @@ axis equal
 xlabel('x')
 ylabel('y')
 zlabel('z')
+t_idx=1;
 for i = 1:length(time)
     t = time(i);
     if t < dt_stamps(end)

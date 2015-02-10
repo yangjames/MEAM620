@@ -19,7 +19,7 @@ params.arm_length = 0.086;
 % Iyy = I(2,2);
 % Izz = I(3,3);
 
-params.maxangle = 80*pi/180; %you can specify the maximum commanded angle here
+params.maxangle = 45*pi/180; %you can specify the maximum commanded angle here
 params.maxF = 2.5*m*g;
 params.minF = 0.05*m*g;
 

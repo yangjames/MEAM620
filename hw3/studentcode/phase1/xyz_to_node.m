@@ -6,7 +6,7 @@ num_y = floor((map.boundary(5)-map.boundary(2))/map.xy_res)+1;
 num_depth = floor((map.boundary(6)-map.boundary(3))/map.z_res)+1;
 num_plane = num_x*num_y;
 
-z_comp = floor((coordinate(:,3)-map.boundary(3))/map.z_res)*num_plane;
+z_comp = round((coordinate(:,3)-map.boundary(3))/map.z_res)*num_plane;
 if z_comp>=num_plane*num_depth
     z_comp = 0;
 end

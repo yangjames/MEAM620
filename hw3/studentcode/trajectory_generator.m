@@ -24,7 +24,7 @@ persistent path0 c_time dt_stamps t_idx t_total pivot_idx C path1
 
 %{
 if isempty(path0)
-    path1 = path{1};
+    path1 = path{1}
     max_der = 1;
     n_der = 4;
     
@@ -34,8 +34,8 @@ if isempty(path0)
     %path0 = [path1(1,:); path1(end,:)];
     
     % find indices where path switches directions
-    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
-
+    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1
+    
     truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
 
     % calculate distance between pivot points
@@ -48,6 +48,8 @@ if isempty(path0)
     c_time = dt_stamps(1);
     t_idx = 1;
     t_total = sum(dt_stamps);
+else
+    %fprintf('FUCK\n')
 end
 
 if t < t_total-dt_stamps(end)
@@ -87,11 +89,17 @@ if isempty(C)
     pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
 
     truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
-
+    
+    %% get rid of zig-zags
+    for i = 2:length(truncated_path)
+        
+    end
+    
     % calculate distance between pivot points
     distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
 
     % gather time stamps between pivot points
+    %dt_stamps = cumsum([0;sqrt(distances)*0.7]);
     dt_stamps = cumsum([0;sqrt(distances)*0.7]);
     
     A = zeros(length(distances)*4);

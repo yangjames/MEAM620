@@ -47,8 +47,8 @@ end
 
 
 euler_des = [phi_des; theta_des; psi_des];
-actual_angles = [actual_angles qd{qn}.euler];
-desired_angles = [desired_angles euler_des];
+%actual_angles = [actual_angles qd{qn}.euler];
+%desired_angles = [desired_angles euler_des];
 
 % Thrust
 F    = err(3)*params.Kp_t + err_d(3)*params.Kd_t + err_d(3)*params.Ki_t...

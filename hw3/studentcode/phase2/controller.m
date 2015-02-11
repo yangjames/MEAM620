@@ -9,7 +9,10 @@ global desired_angles actual_angles
 % Using these current and desired states, you have to compute the desired controls
 
 % =================== Your code goes here ===================
-%set(gca,'xlim',qd{qn}.pos(1)+[-1 1],'ylim',qd{qn}.pos(2)+[-1 1],'zlim',qd{qn}.pos(3)+[-1 1])
+%{
+gca_lims = [-2 2];
+set(gca,'xlim',qd{qn}.pos(1)+gca_lims,'ylim',qd{qn}.pos(2)+gca_lims,'zlim',qd{qn}.pos(3)+gca_lims)
+%}
 if isempty(err_c)
     err_c = [0;0;0];
 end
@@ -26,14 +29,19 @@ a = qd{qn}.acc_des+[0 0 params.grav]' + params.Kp_o*(err) + params.Kd_o*(err_d);
 if a(3) < 0.5
     a(3) = 0.5;
 end
-if norm(a) > 2*params.grav
+if norm(a) > 2*params.grav 
     alpha = (-2*a(3)*params.grav+sqrt(4*a(3)^2*params.grav^2-4*norm(a)^2*(params.grav^2-(2*params.grav)^2)))/(2*norm(a)^2);
     a = alpha*a;
 end
+if acos(dot(a,[0 0 1]')/norm(a)) > params.maxangle
+    a = [a(1:2)/norm(a(1:2))*norm(a)*sin(params.maxangle); norm(a)*cos(params.maxangle)];
+end
+
 theta_des = atan2(a(1),a(3));
 phi_des = -atan2(a(2),a(3));
 psi_des = 0;
 
+%{
 if phi_des > params.maxangle
     phi_des = params.maxangle;
 elseif phi_des < -params.maxangle
@@ -44,7 +52,7 @@ if theta_des > params.maxangle
 elseif theta_des < -params.maxangle
     theta_des = -params.maxangle;
 end
-
+%}
 
 euler_des = [phi_des; theta_des; psi_des];
 %actual_angles = [actual_angles qd{qn}.euler];

@@ -1,5 +1,5 @@
 function [ desired_state ] = trajectory_generator(t, qn, map, path)
-persistent path0 c_time dt_stamps t_idx t_total pivot_idx C path1
+persistent path0 c_time dt_stamps t_idx t_total pivot_idx C path1 truncated_path
 % TRAJECTORY_GENERATOR: Turn a Dijkstra or A* path into a trajectory
 %
 % NOTE: This function would be called with variable number of input
@@ -22,49 +22,56 @@ persistent path0 c_time dt_stamps t_idx t_total pivot_idx C path1
 % map0 = map;
 % path0 = path;
 
-%{
+%{d
 if isempty(path0)
-    path1 = path{1}
-    max_der = 1;
-    n_der = 4;
+    path1 = path{1};
     
     % filter the path
-    window_size = 5;
-    path0 = path1;%[conv2(path1,ones(window_size,1)/window_size,'valid'); path1(end,:)];
-    %path0 = [path1(1,:); path1(end,:)];
+    path0 = path1;
     
     % find indices where path switches directions
-    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1
+    pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
     
-    truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
+    truncated_path = path0;%[path0(1,:); path0(pivot_idx,:); path0(end,:)];
 
+    % get rid of zig-zags
+    minimized_flag = false;
+    while ~minimized_flag
+        for i = 1:length(truncated_path)-2
+            num_points = sum((truncated_path(i+2,:)-truncated_path(i,1)).^2,2)/(min(map.xy_res,map.z_res)/10);
+            x_space = linspace(truncated_path(i,1),truncated_path(i+2,1),num_points);
+            y_space = linspace(truncated_path(i,2),truncated_path(i+2,2),num_points);
+            z_space = linspace(truncated_path(i,3),truncated_path(i+2,3),num_points);
+            if ~any(collide(map,[x_space' y_space' z_space']));
+                truncated_path(i+1,:) = [];
+                minimized_flag = false;
+                break;
+            else
+                minimized_flag = true;
+            end
+        end
+    end
+    
     % calculate distance between pivot points
     distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
     
     % gather time stamps between pivot points
-    dt_stamps = (distances).^(1/3)*1.5;
-    disp([distances dt_stamps])
-    
-    c_time = dt_stamps(1);
+    dt_stamps = cumsum([0;sqrt(distances)*0.9]);
     t_idx = 1;
-    t_total = sum(dt_stamps);
-else
-    %fprintf('FUCK\n')
 end
 
-if t < t_total-dt_stamps(end)
-    if t > c_time
+if t < dt_stamps(end)
+    if t >= dt_stamps(t_idx)
         t_idx = t_idx+1;
-        c_time = c_time + dt_stamps(t_idx);
     end
-    dt = t-sum(dt_stamps(1:t_idx-1));
-    X_0 = [path0(pivot_idx(t_idx),:);...
+    dt = t-dt_stamps(t_idx-1);
+    X_0 = [truncated_path(t_idx-1,:);...
         0 0 0;...
         0 0 0;...
-        path0(pivot_idx(t_idx+1),:);...
+        truncated_path(t_idx,:);...
         0 0 0;...
         0 0 0];
-    a = get_interp_weights(X_0,dt_stamps(t_idx));
+    a = get_interp_weights(X_0,dt_stamps(t_idx)-dt_stamps(t_idx-1));
     X = [1 dt dt^2 dt^3 dt^4 dt^5;...
         0 1 2*dt 3*dt^2 4*dt^3 5*dt^4;...
         0 0 2 6*dt 12*dt^2 20*dt^3]*a;
@@ -72,18 +79,17 @@ if t < t_total-dt_stamps(end)
     vel = X(2,:)';
     acc = X(3,:)';
 else
-    pos = path0(end,:)';
+    pos = truncated_path(end,:)';
     vel = [0 0 0]';
     acc = [0 0 0]';
 end
 %}
-%{d
+%{
 if isempty(C)
     path1 = path{1};
 
     % filter the path
-    window_size = 5;
-    path0 = path1;%[conv2(path1,ones(window_size,1)/window_size,'valid'); path1(end,:)];
+    path0 = path1;
     
     % find indices where path switches directions
     pivot_idx = find(sqrt(sum(diff(diff(path0)).^2,2))>100*eps)+1;
@@ -91,15 +97,27 @@ if isempty(C)
     truncated_path = [path0(1,:); path0(pivot_idx,:); path0(end,:)];
     
     %% get rid of zig-zags
-    for i = 2:length(truncated_path)
-        
+    minimized_flag = false;
+    while ~minimized_flag
+        for i = 1:length(truncated_path)-2
+            num_points = sum((truncated_path(i+2,:)-truncated_path(i,1)).^2,2)/(min(map.xy_res,map.z_res)/10);
+            x_space = linspace(truncated_path(i,1),truncated_path(i+2,1),num_points);
+            y_space = linspace(truncated_path(i,2),truncated_path(i+2,2),num_points);
+            z_space = linspace(truncated_path(i,3),truncated_path(i+2,3),num_points);
+            if ~any(collide(map,[x_space' y_space' z_space']));
+                truncated_path(i+1,:) = [];
+                minimized_flag = false;
+                break;
+            else
+                minimized_flag = true;
+            end
+        end
     end
     
     % calculate distance between pivot points
     distances = sqrt(sum((truncated_path(1:end-1,:)-truncated_path(2:end,:)).^2,2));
 
     % gather time stamps between pivot points
-    %dt_stamps = cumsum([0;sqrt(distances)*0.7]);
     dt_stamps = cumsum([0;sqrt(distances)*0.7]);
     
     A = zeros(length(distances)*4);
@@ -113,8 +131,8 @@ if isempty(C)
     end
 
     % add end point velocity constraints
-    A(length(distances)*2+1,1:4) = [0 1 dt_stamps(1) dt_stamps(1)^2];
-    A(length(distances)*2+2,end-3:end) = [0 1 dt_stamps(end) dt_stamps(end)^2];
+    A(length(distances)*2+1,1:4) = [0 1 2*dt_stamps(1) 3*dt_stamps(1)^2];
+    A(length(distances)*2+2,end-3:end) = [0 1 2*dt_stamps(end) 3*dt_stamps(end)^2];
 
     % add velocity and acceleration constraints
     for i = 1:length(distances)-1
@@ -123,11 +141,12 @@ if isempty(C)
         A(length(distances)*2+2+i+length(distances)-1,(i-1)*4+1:(i-1)*4+8) = ...
             [0 0 2 6*dt_stamps(i+1) 0 0 -2 -6*dt_stamps(i+1)];
     end
+    
     C=A\X;
     t_idx = 1;
 end
 
-if t < dt_stamps(end-1)
+if t < dt_stamps(end)
     if t >= dt_stamps(t_idx)
         t_idx = t_idx+1;
     end
@@ -139,7 +158,7 @@ if t < dt_stamps(end-1)
     vel = S(2,:)';
     acc = S(3,:)';
 else
-    pos = path0(end,:)';
+    pos = truncated_path(end,:)';
     vel = [0 0 0]';
     acc = [0 0 0]';
 end
@@ -154,7 +173,7 @@ if t < 7
     vel = [0 0 0]';
     acc = [0 0 0]';
 else
-    pos = path1(1,:)'+[5 5 5]';
+    pos = path1(1,:)'+[10 5 5]';
     vel = [0 0 0]';
     acc = [0 0 0]';
 end

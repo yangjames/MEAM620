@@ -2,7 +2,7 @@ clear all
 close all
 
 %% load data
-dataset = 1; % 1, 4, or 9
+dataset = 9; % 1, 4, or 9
 load(['data/studentdata' num2str(dataset) '.mat']);
 
 %% process data
@@ -67,8 +67,8 @@ for i = 1:length(data)
             pause(data(i).t-t_end)
         end
     end
-    %fprintf(repmat('\b',1,num_bytes));
-    %num_bytes = fprintf('time: %6.6f',data(i).t);
+    fprintf(repmat('\b',1,num_bytes));
+    num_bytes = fprintf('time: %6.6f',data(i).t);
 end
 data_ts = [];
 for i = 1:length(data)

@@ -21,7 +21,11 @@ function [pos, eul] = estimate_pose(sensor, varargin)
 %                  @(sensor) estimate_pose(sensor, your personal input arguments);
 %   pos - 3x1 position of the quadrotor in world frame
 %   eul - 3x1 euler angles of the quadrotor
-
+if isempty(sensor.id)
+    pos = zeros(3,1);
+    eul = zeros(3,1);
+    return
+end
 
 p4_xy = [2*mod(sensor.id,12)*0.152;floor(sensor.id./12)*2*0.152];
 p4_xy(2,sensor.id>35) = p4_xy(2,sensor.id>35) + 0.026;

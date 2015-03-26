@@ -70,4 +70,19 @@ for i = 1:length(data)
     fprintf(repmat('\b',1,num_bytes));
     num_bytes = fprintf('time: %6.6f',data(i).t);
 end
+data_ts = [];
+for i = 1:length(data)
+    data_ts(i) = data(i).t;
+end
+figure(3)
+clf
+plot(data_ts,cam_pos(1,:),'r-')
+hold on
+plot(data_ts,cam_pos(2,:),'g-')
+plot(data_ts,cam_pos(3,:),'b-')
+plot(time,vicon(1,:),'r--')
+plot(time,vicon(2,:),'g--')
+plot(time,vicon(3,:),'b--')
+grid on
+
 fprintf('\n');

@@ -21,9 +21,7 @@ function [pos, eul] = estimate_pose(sensor, varargin)
 %                  @(sensor) estimate_pose(sensor, your personal input arguments);
 %   pos - 3x1 position of the quadrotor in world frame
 %   eul - 3x1 euler angles of the quadrotor
-K=[314.1779 0         199.4848; ...
-    0         314.2218  113.7838; ...
-    0         0         1];
+
 
 p4_xy = [2*mod(sensor.id,12)*0.152;floor(sensor.id./12)*2*0.152];
 p4_xy(2,sensor.id>35) = p4_xy(2,sensor.id>35) + 0.026;
@@ -37,7 +35,27 @@ p1_xy = bsxfun(@plus,p4_xy,[0.152; 0]);
 p_xy = [p0_xy p1_xy p2_xy p3_xy p4_xy];
 p_im = [sensor.p0 sensor.p1 sensor.p2 sensor.p3 sensor.p4];
 
-H = est_homography(p_im(1,:),p_im(2,:),p_xy(1,:),p_xy(2,:));
+%% estimate the homography
+A = zeros(size(p_xy,2)*2,9);
+
+for i = 1:size(p_xy,2),
+ a = [p_xy(:,i)',1];
+ b = [0 0 0];
+ c = p_im(:,i);
+ d = -c*a;
+ A((i-1)*2+1:(i-1)*2+2,1:9) = [[a b;b a] d];
+end
+
+[~, ~, V] = svd(A);
+h = V(:,9);
+H = reshape(h,3,3)';
+
+H = H./H(3, 3); % for calibration!
+
+%% calculate pose
+K=[314.1779 0         199.4848; ...
+    0         314.2218  113.7838; ...
+    0         0         1];
 H_w = K\H;
 [U,~,V] = svd([H_w(:,1:2) cross(H_w(:,1),H_w(:,2))]);
 R_cam = U*[1 0 0; 0 1 0; 0 0 det(U*V')]*V';

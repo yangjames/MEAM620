@@ -43,7 +43,7 @@ t_start = toc;
 num_bytes = 0;
 for i = 1:length(data)
     % estimate pose
-    [vel,eul] = estimate_vel(data(i),[]);
+    [vel,eul] = estimate_vel(data(i));
     if ~isempty(vel) && ~isempty(eul)
         cam_vel(:,i) = vel;
         cam_eul(:,i) = eul;

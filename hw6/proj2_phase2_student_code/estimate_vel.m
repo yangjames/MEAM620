@@ -31,8 +31,8 @@ if isempty(sensor.id)
     return
 end
 if isempty(oldPoints)
-    vel = [];
-    omg = [];
+    vel = zeros(3,1);
+    omg = zeros(3,1);
     K=[314.1779 0         199.4848; ...
         0         314.2218  113.7838; ...
         0         0         1];
@@ -106,7 +106,7 @@ if size(visiblePoints, 1) >= 2 % need at least 2 points
     % calculate optical flow
     p_prev = K\[oldInliers';ones(1,n)];
     %d_pixels = K\[(visiblePoints-oldInliers)'; zeros(1,n)]/dt_filtered;
-    d_pixels = (p_current-p_prev)/dt_filtered;
+    d_pixels = (p_current-p_prev)/0.02;
     p_dot = reshape(d_pixels(1:2,:), n*2,1);
 
     % get optical flow to velocities transformation matrix

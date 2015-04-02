@@ -22,12 +22,13 @@ function [pos, eul] = estimate_pose(sensor, varargin)
 %   pos - 3x1 position of the quadrotor in world frame
 %   eul - 3x1 euler angles of the quadrotor
 if isempty(sensor.id)
-    pos = zeros(3,1);
-    eul = zeros(3,1);
+    pos = [];
+    eul = [];
     return
 end
 
-p4_xy = [2*mod(sensor.id,12)*0.152;floor(sensor.id./12)*2*0.152];
+p4_xy = [mod(sensor.id,12);...
+        floor(sensor.id./12)]*2*0.152;
 p4_xy(2,sensor.id>35) = p4_xy(2,sensor.id>35) + 0.026;
 p4_xy(2,sensor.id>71) = p4_xy(2,sensor.id>71) + 0.026;
 
@@ -43,18 +44,18 @@ p_im = [sensor.p0 sensor.p1 sensor.p2 sensor.p3 sensor.p4];
 A = zeros(size(p_xy,2)*2,9);
 
 for i = 1:size(p_xy,2),
- a = [p_xy(:,i)',1];
- b = [0 0 0];
- c = p_im(:,i);
- d = -c*a;
- A((i-1)*2+1:(i-1)*2+2,1:9) = [[a b;b a] d];
+    a = [p_xy(:,i)',1];
+    b = [0 0 0];
+    c = p_im(:,i);
+    d = -c*a;
+    A((i-1)*2+1:(i-1)*2+2,1:9) = [[a b;b a] d];
 end
 
 [~, ~, V] = svd(A);
 h = V(:,9);
 H = reshape(h,3,3)';
 
-H = H./H(3, 3); % for calibration!
+H = H/H(3, 3); % for calibration!
 
 %% calculate pose
 K=[314.1779 0         199.4848; ...

@@ -81,7 +81,7 @@ if ~isempty(vic)
 end
 
 %% if April Tag info available, update
-if ~isempty(sensor)
+if ~isempty(sensor) && ~isempty(sensor.id)
     dt = sensor.t-t_prev_sen;
     
     %% create C matrix

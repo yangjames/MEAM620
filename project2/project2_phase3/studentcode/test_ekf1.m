@@ -1,7 +1,7 @@
 %% load data
 clear all;
 close all;
-load data/studentdata1;
+load data/studentdata9;
 
 init_script;
 

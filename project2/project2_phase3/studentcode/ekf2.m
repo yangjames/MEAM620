@@ -34,15 +34,14 @@ function [X, Z] = ekf2(sensor, params)
 %     [x; y; z; roll; pitch; yaw; other measurement you use]
 %     note that this output is optional, it's here in case you want to log your
 %     measurement 
-persistent X_prev t_prev_vic t_prev_sen P Q R
+persistent X_prev t_prev_sen P Q R
 
 if isempty(X_prev)
     X_prev = zeros(15,1);
-    t_prev_vic = 0;
     t_prev_sen = 0;
     P = eye(15);
-    Q = diag([1 1 1 1 1 1 1 1 1 1 1 1])*2;
-    R = diag([1 1 1 10 10 10]);
+    Q = diag([0.1*ones(1,3) 1*ones(1,3) ones(1,3) ones(1,3)]);
+    R = diag([0.5*ones(1,3) ones(1,3)]);
 end
 
 if isempty(sensor)
@@ -50,7 +49,11 @@ if isempty(sensor)
     Z = [];
     return
 end
-
+if isempty(sensor.id)
+    X = [];
+    Z = [];
+    return
+end
 X = X_prev;
 
 %% if april tag data is available, run EKF

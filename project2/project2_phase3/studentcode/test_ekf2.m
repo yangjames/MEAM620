@@ -1,13 +1,13 @@
 %% load data
-%clear all;
+clear all;
 close all;
-load data/studentdata1;
+load data/studentdata9;
 
 init_script;
  
 %% interleave time vectors
 N = length(data);
-all_time = [];
+all_time = zeros(1,N);
 for i = 1:N
     all_time(i) = data(i).t;
 end

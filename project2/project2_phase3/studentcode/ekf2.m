@@ -40,18 +40,20 @@ if isempty(X_prev)
     X_prev = zeros(15,1);
     t_prev_sen = 0;
     P = eye(15);
-    Q = diag([ones(1,3)*20 ones(1,3)*0.5 ones(1,3)*1 ones(1,3)*2]);
-    R = diag([ones(1,6)*0.0001 ones(1,3)*0.01]);
+    Q = eye(12);%bsxfun(@times,eye(12),[ones(1,3)*10 ones(1,3) ones(1,3) ones(1,3)]);
+    R = eye(9);
+    %Q = diag([ones(1,3)*0.5 ones(1,3)*0.1 ones(1,3)*1 ones(1,3)*2]);
+    %R = diag([ones(1,6)*0.0001 ones(1,3)*0.001]);
 end
 
-if ~sensor.is_ready || isempty(sensor.id)
+if ~sensor.is_ready
     X = X_prev;
     X = [X(1:3);X(7:9);X(4:6);X(10:end)];
     Z = [];
     return
 end
 X = X_prev;
-
+Z = [];
    
 %% propagate
 dt = sensor.t-t_prev_sen;
@@ -63,9 +65,9 @@ phi_dot = sensor.omg(1);
 theta_dot = sensor.omg(2);
 psi_dot = sensor.omg(3);
 
-v_x = X_prev(4);
-v_y = X_prev(5);
-v_z = X_prev(6);
+v_x = X_prev(7);
+v_y = X_prev(8);
+v_z = X_prev(9);
 a_x = sensor.acc(1);
 a_y = sensor.acc(2);
 a_z = sensor.acc(3);
@@ -79,6 +81,7 @@ F = eye(15) + dt * params.A2(phi,theta,psi,...
                             0,0,...
                             phi_dot,psi_dot);
 %}
+%{d
 F = eye(15) + dt * params.A2(phi,theta,psi,...
                             a_x,a_y,a_z,...
                             0,0,0,...
@@ -86,7 +89,8 @@ F = eye(15) + dt * params.A2(phi,theta,psi,...
                             0,0,0,...
                             0,0,...
                             phi_dot,psi_dot);
-                        %{
+%}
+%{
 bt = params.f2(phi,theta,psi,...
     a_x,a_y,a_z,...
     X_prev(13),X_prev(14),X_prev(15),...
@@ -97,7 +101,8 @@ bt = params.f2(phi,theta,psi,...
     0,0,0,...
     v_x,v_y,v_z,...
     phi_dot,theta_dot,psi_dot)*dt;
-                            %}
+%}
+%{d
 bt = params.f2(phi,theta,psi,...
     a_x,a_y,a_z,...
     0,0,0,...
@@ -108,22 +113,27 @@ bt = params.f2(phi,theta,psi,...
     0,0,0,...
     v_x,v_y,v_z,...
     phi_dot,theta_dot,psi_dot)*dt;
+%}
 V = params.U2(phi,theta,psi)*dt;
 
 X = X+bt;
 P = F*P*F'+ V*Q*V';
 
 %% update
-C = [eye(9) zeros(9,6)];
+if ~isempty(sensor.id)
+    C = [eye(9) zeros(9,6)];
 
-[p,q] = estimate_pose(sensor);
-[p_dot,~] = estimate_vel(sensor);
-Z = [p;q;p_dot];
+    [p,q] = estimate_pose(sensor);
+    [p_dot,~] = estimate_vel(sensor);
+    Z = [p;q;p_dot];
 
-K = P*C'/(C*P*C'+R);
-X = X+K*(Z-C*X_prev);
+    K = P*C'/(C*P*C'+R);
+    X = X+K*(Z-C*X_prev);
 
-P = (eye(15)-K*C)*P;
+    P = (eye(15)-K*C)*P;
+    
+    Z = [Z(1:3);Z(7:9);Z(4:6)];
+end
 
 %% store new value
 X_prev = X;
@@ -131,5 +141,4 @@ t_prev_sen = sensor.t;
 
 %% returned values need to be of certain format
 X = [X(1:3);X(7:9);X(4:6);X(10:end)];
-Z = [Z(1:3);Z(7:9);Z(4:6)];
 end

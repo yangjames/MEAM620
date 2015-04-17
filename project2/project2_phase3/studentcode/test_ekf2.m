@@ -23,11 +23,11 @@ for i=1:N
     [X_out, Z_out] = ekf2_handle(data(i));
     t_end = toc;
     if ~isempty(X_out)
-        X(1:15,idx) = X_out;
+        X(:,idx) = X_out;
         if ~isempty(Z_out)
-            Z(1:9,idx) = Z_out;
+            Z(:,idx) = Z_out;
         else
-            Z(1:9,idx) = zeros(9,1);
+            Z(:,idx) = zeros(9,1);
         end
         timing(idx) = t_end-t_start;
         idx = idx+1;
@@ -66,7 +66,9 @@ subplot(3,3,9)
 plot(m_time,X(9,:),'r-',time,vicon(6,:),'b-',m_time,Z(9,:),'g--');
 title('\psi')
 
+%{
 figure, grid on
 plot(1:idx-1,timing,'b--')
 ylabel('dt')
 xlabel('index')
+%}

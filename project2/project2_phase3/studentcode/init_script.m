@@ -87,21 +87,59 @@ assume([p q p_dot b_g b_a n_g n_a n_bg n_ba w_m],'real')
 
 p_ddot = sym('a',[3 1]);
 g = [0 0 -9.81]';
-R = get_rot(q(1),q(2),q(3),'zxy');
+%R = get_rot(q(1),q(2),q(3),'zxy');
+R = [cos(q(3))*cos(q(2))-sin(q(1))*sin(q(3))*sin(q(2)) -cos(q(1))*sin(q(3)) cos(q(3))*sin(q(2))+cos(q(2))*sin(q(1))*sin(q(3));...
+    cos(q(2))*sin(q(3))+cos(q(3))*sin(q(1))*sin(q(2)) cos(q(1))*cos(q(3)) sin(q(3))*sin(q(2))-cos(q(3))*cos(q(2))*sin(q(1));...
+    -cos(q(1))*sin(q(2)) sin(q(1)) cos(q(1))*cos(q(2))];
 
 G = [cos(q(2)) 0 -cos(q(1))*sin(q(2));
     0 1 sin(q(1));
     sin(q(2)) 0 cos(q(1))*cos(q(2))];
 
-x_dot = simplify([p_dot; G^-1*(w_m-b_g-n_g);g+R*(a_m-b_a-n_a);n_bg;n_ba]);
+x_dot = simplify([p_dot; G\(w_m-b_g-n_g); g+R*(a_m-b_a-n_a);n_bg;n_ba]);
 
 z = [p;q;p_dot];
 
 params.A2=matlabFunction(simplify(jacobian(x_dot,x)));
 params.U2=matlabFunction(simplify(jacobian(x_dot,[n_a;n_g;n_bg;n_ba])));
 params.f2=matlabFunction(x_dot);
-params.C2=matlabFunction(simplify(jacobian(x_dot,z)));
+params.C2=matlabFunction(simplify(jacobian(z,x)));
 
+%% create ekf2 no bias function handles
+
+p = sym('x',[3 1]);
+q = sym('a',[3 1]);
+p_dot = sym('v',[3 1]);
+
+x = [p;q;p_dot];
+
+a_m = sym('a_m',[3 1]);
+w_m = sym('w_m',[3 1]);
+n_g = sym('n_g',[3 1]);
+n_a = sym('n_a',[3 1]);
+
+assume([p q p_dot n_g n_a w_m],'real')
+
+p_ddot = sym('a',[3 1]);
+g = [0 0 -9.81]';
+R = get_rot(q(1),q(2),q(3),'zxy');
+%{
+R = [cos(q(3))*cos(q(2))-sin(q(1))*sin(q(3))*sin(q(2)) -cos(q(1))*sin(q(3)) cos(q(3))*sin(q(2))+cos(q(2))*sin(q(1))*sin(q(3));...
+    cos(q(2))*sin(q(3))+cos(q(3))*sin(q(1))*sin(q(2)) cos(q(1))*cos(q(3)) sin(q(3))*sin(q(2))-cos(q(3))*cos(q(2))*sin(q(1));...
+    -cos(q(1))*sin(q(2)) sin(q(1)) cos(q(1))*cos(q(2))];
+%}
+G = [cos(q(2)) 0 -cos(q(1))*sin(q(2));
+    0 1 sin(q(1));
+    sin(q(2)) 0 cos(q(1))*cos(q(2))];
+
+x_dot = simplify([p_dot; G\(w_m-n_g); g+R*(a_m-n_a)]);
+
+z = [p;q;p_dot];
+
+params.A2_nb=matlabFunction(simplify(jacobian(x_dot,x)));
+params.U2_nb=matlabFunction(simplify(jacobian(x_dot,[n_g;n_a])));
+params.f2_nb=matlabFunction(x_dot);
+params.C2_nb=matlabFunction(simplify(jacobian(z,x)));
 
 
 ekf1_handle = @(sensor, vic) ekf1(sensor, vic, params);

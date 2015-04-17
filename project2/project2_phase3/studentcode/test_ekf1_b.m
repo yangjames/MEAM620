@@ -18,10 +18,10 @@ Z = zeros(6,N);
 for i=1:N
     if all_time(2,i) == 1
         vic = struct('t', all_time(1,i), 'vel', vicon(7:12,all_time(3,i)));
-        [X(:,i), Z(:,i)] = ekf1b_handle([], vic, params);
+        [X(:,i), Z(:,i)] = ekf1b_handle([], vic);
     else
         sensor = data(all_time(3,i));
-        [X(:,i), Z(:,i)] = ekf1b_handle(sensor, [], params);
+        [X(:,i), Z(:,i)] = ekf1b_handle(sensor, []);
     end
 end
 

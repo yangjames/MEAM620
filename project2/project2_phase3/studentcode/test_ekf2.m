@@ -20,7 +20,7 @@ timing = [];
 tic
 for i=1:N
     t_start = toc;
-    [X_out, Z_out] = ekf2_handle(data(i), params);
+    [X_out, Z_out] = ekf2_handle(data(i));
     t_end = toc;
     if ~isempty(X_out)
         X(1:15,idx) = X_out;

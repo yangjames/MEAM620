@@ -44,12 +44,7 @@ if isempty(X_prev)
     R = diag([ones(1,6)*0.0001 ones(1,3)*0.01]);
 end
 
-if isempty(sensor)
-    X = [];
-    Z = [];
-    return
-end
-if isempty(sensor.id)
+if ~sensor.is_ready || isempty(sensor.id)
     X = [];
     Z = [];
     return
@@ -103,12 +98,11 @@ C = [eye(9) zeros(9,6)];
 [p,q] = estimate_pose(sensor);
 [p_dot,~] = estimate_vel(sensor);
 Z = [p;q;p_dot];
-%{d
+
 K = P*C'/(C*P*C'+R);
 X = X+K*(Z-C*X_prev);
 
 P = (eye(15)-K*C)*P;
-%}
 
 %% store new value
 X_prev = X;

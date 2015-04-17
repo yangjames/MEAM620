@@ -87,10 +87,7 @@ assume([p q p_dot b_g b_a n_g n_a n_bg n_ba w_m],'real')
 
 p_ddot = sym('a',[3 1]);
 g = [0 0 -9.81]';
-%R = get_rot(q(1),q(2),q(3),'zxy');
-R = [cos(q(3))*cos(q(2))-sin(q(1))*sin(q(3))*sin(q(2)) -cos(q(1))*sin(q(3)) cos(q(3))*sin(q(2))+cos(q(2))*sin(q(1))*sin(q(3));...
-    cos(q(2))*sin(q(3))+cos(q(3))*sin(q(1))*sin(q(2)) cos(q(1))*cos(q(3)) sin(q(3))*sin(q(2))-cos(q(3))*cos(q(2))*sin(q(1));...
-    -cos(q(1))*sin(q(2)) sin(q(1)) cos(q(1))*cos(q(2))];
+R = get_rot(q(1),q(2),q(3),'zxy');
 
 G = [cos(q(2)) 0 -cos(q(1))*sin(q(2));
     0 1 sin(q(1));
@@ -123,11 +120,7 @@ assume([p q p_dot n_g n_a w_m],'real')
 p_ddot = sym('a',[3 1]);
 g = [0 0 -9.81]';
 R = get_rot(q(1),q(2),q(3),'zxy');
-%{
-R = [cos(q(3))*cos(q(2))-sin(q(1))*sin(q(3))*sin(q(2)) -cos(q(1))*sin(q(3)) cos(q(3))*sin(q(2))+cos(q(2))*sin(q(1))*sin(q(3));...
-    cos(q(2))*sin(q(3))+cos(q(3))*sin(q(1))*sin(q(2)) cos(q(1))*cos(q(3)) sin(q(3))*sin(q(2))-cos(q(3))*cos(q(2))*sin(q(1));...
-    -cos(q(1))*sin(q(2)) sin(q(1)) cos(q(1))*cos(q(2))];
-%}
+
 G = [cos(q(2)) 0 -cos(q(1))*sin(q(2));
     0 1 sin(q(1));
     sin(q(2)) 0 cos(q(1))*cos(q(2))];

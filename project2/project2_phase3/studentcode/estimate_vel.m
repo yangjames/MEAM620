@@ -123,7 +123,7 @@ if size(visiblePoints, 1) >= 2 % need at least 2 points
     
     % propagate the matched features
     [~,vol] = convhull(double(visiblePoints));
-    if vol <= numel(sensor.img)*0.75
+    if vol <= numel(sensor.img)*0.5
     %if size(visiblePoints,1)<150
         oldPoints = corner(sensor.img);
     else

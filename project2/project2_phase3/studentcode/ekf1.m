@@ -92,7 +92,7 @@ if ~isempty(sensor) && ~isempty(sensor.id)
     Z = [p;q];
 
     K = P*C'/(C*P*C'+R);
-    X = X+K*(Z-C*X);
+    X = X+K*(Z-C*X_prev);
 
     P = (eye(6)-K*C)*P;
     

@@ -96,8 +96,11 @@ G = [cos(q(2)) 0 -cos(q(1))*sin(q(2));
     0 1 sin(q(1));
     sin(q(2)) 0 cos(q(1))*cos(q(2))];
 
-x_dot = simplify([p_dot; G^-1*(w_m-b_g-n_g); g+R*(a_m-b_a-n_a);n_bg;n_ba]);
+x_dot = simplify([p_dot; G^-1*(w_m-b_g-n_g);g+R*(a_m-b_a-n_a);n_bg;n_ba]);
+
+z = [p;q;p_dot];
 
 params.A2=matlabFunction(simplify(jacobian(x_dot,x)));
-params.U2=matlabFunction(simplify(jacobian(x_dot,[n_g;n_a;n_bg;n_ba])));
+params.U2=matlabFunction(simplify(jacobian(x_dot,[n_a;n_g;n_bg;n_ba])));
 params.f2=matlabFunction(x_dot);
+params.C2=matlabFunction(simplify(jacobian(x_dot,z)));

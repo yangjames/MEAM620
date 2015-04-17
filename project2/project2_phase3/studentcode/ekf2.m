@@ -45,7 +45,8 @@ if isempty(X_prev)
 end
 
 if ~sensor.is_ready || isempty(sensor.id)
-    X = [];
+    X = X_prev;
+    X = [X(1:3);X(7:9);X(4:6);X(10:end)];
     Z = [];
     return
 end

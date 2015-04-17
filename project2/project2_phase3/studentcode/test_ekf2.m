@@ -1,7 +1,7 @@
 %% load data
 clear all;
 close all;
-load data/studentdata9;
+load data/studentdata1;
 
 init_script;
  
@@ -24,7 +24,11 @@ for i=1:N
     t_end = toc;
     if ~isempty(X_out)
         X(1:15,idx) = X_out;
-        Z(1:9,idx) = Z_out;
+        if ~isempty(Z_out)
+            Z(1:9,idx) = Z_out;
+        else
+            Z(1:9,idx) = zeros(9,1);
+        end
         timing(idx) = t_end-t_start;
         idx = idx+1;
     end

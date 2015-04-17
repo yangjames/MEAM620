@@ -7,9 +7,6 @@
 % We will only call ekf_handle in the test function.
 % Note that this will only create a function handle, but not run the function
 
-ekf1_handle = @(sensor, vic, params) ekf1(sensor, vic, params);
-ekf2_handle = @(sensor,params) ekf2(sensor,params);
-ekf1b_handle = @(sensor,vic,params) ekf1_b(sensor,vic,params);
 
 
 %% create ekf1 no bias function handles
@@ -104,3 +101,9 @@ params.A2=matlabFunction(simplify(jacobian(x_dot,x)));
 params.U2=matlabFunction(simplify(jacobian(x_dot,[n_a;n_g;n_bg;n_ba])));
 params.f2=matlabFunction(x_dot);
 params.C2=matlabFunction(simplify(jacobian(x_dot,z)));
+
+
+
+ekf1_handle = @(sensor, vic) ekf1(sensor, vic, params);
+ekf2_handle = @(sensor) ekf2(sensor,params);
+ekf1b_handle = @(sensor,vic) ekf1_b(sensor,vic,params);

@@ -143,5 +143,5 @@ params.C2_nb=matlabFunction(simplify(jacobian(z,x)));
 
 
 ekf1_handle = @(sensor, vic) ekf1(sensor, vic, params);
-ekf2_handle = @(sensor) ekf2_nb(sensor,params);
+ekf2_handle = @(sensor) ekf2(sensor,params);
 ekf1b_handle = @(sensor,vic) ekf1_b(sensor,vic,params);

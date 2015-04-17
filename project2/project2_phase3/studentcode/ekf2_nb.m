@@ -46,7 +46,7 @@ if isempty(X_prev)
     %R = diag([ones(1,6)*0.0001 ones(1,3)*0.001]);
 end
 
-if ~sensor.is_ready || ~isempty(sensor.id)
+if ~sensor.is_ready || isempty(sensor.id)
     X = X_prev;
     X = [X(1:3);X(7:9);X(4:6)];
     Z = [];
